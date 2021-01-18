@@ -1,7 +1,8 @@
 import React from 'react';
 import { Modal, Button } from 'react-bootstrap';
+import PropTypes from 'prop-types';
 
-export default function CustomModal(props) {
+export default function ModalWrapper(props) {
 	return (
 		<>
 			<Modal show={props.showModal || false} onHide={props.handleModal}>
@@ -23,3 +24,8 @@ export default function CustomModal(props) {
 		</>
 	);
 }
+
+ModalWrapper.propTypes = {
+	handleModal: PropTypes.func.isRequired,
+	showModal: PropTypes.bool.isRequired
+};

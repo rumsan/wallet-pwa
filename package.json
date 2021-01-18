@@ -9,6 +9,7 @@
     "bip39": "^3.0.2",
     "bootstrap": "^4.5.1",
     "ethereumjs-wallet": "^1.0.0",
+    "history": "^5.0.0",
     "react": "^16.13.1",
     "react-bootstrap": "^1.3.0",
     "react-dom": "^16.13.1",
@@ -40,7 +41,6 @@
     ]
   },
   "devDependencies": {
-    "eslint": "^7.18.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-config-prettier": "^7.1.0",
     "eslint-plugin-prettier": "^3.3.1",
