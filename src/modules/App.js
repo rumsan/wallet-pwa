@@ -7,20 +7,20 @@ import Footer from './layouts/Footer';
 import Transfer from '../modules/transfer/';
 
 function App() {
-  return (
-    <>
-      <Header />
-      <Router>
-        <Switch>
-          <div id="appCapsule">
-            <Route exact path="/" component={Home} />
-            <Route path="/transfer" component={Transfer} />
-          </div>
-        </Switch>
-        <Footer />
-      </Router>
-    </>
-  );
+	return (
+		<>
+			<Header />
+			<Router>
+				<Switch>
+					<div id="appCapsule">
+						<Route exact path="/" component={Home} />
+						<Route path="/transfer" component={Transfer} />
+					</div>
+				</Switch>
+				<Footer />
+			</Router>
+		</>
+	);
 }
 
 export default App;
