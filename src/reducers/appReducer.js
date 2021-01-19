@@ -1,14 +1,15 @@
 import APP_ACTIONS from '../actions/appActions';
 
 export default (state, action) => {
-	console.log('Action==>', action);
-	const { privateKey, publicKey } = action.data;
+	const { privateKey, address } = action.data;
+	console.log({ privateKey });
+	console.log({ address });
 	switch (action.type) {
-		case APP_ACTIONS.SET_WALLET_KEY:
+		case APP_ACTIONS.SET_WALLET_KEYS:
 			return {
 				...state,
 				privateKey: privateKey,
-				publicKey: publicKey
+				address: address
 			};
 
 		default:

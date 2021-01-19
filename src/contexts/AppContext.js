@@ -4,7 +4,7 @@ import APP_ACTIONS from '../actions/appActions';
 
 const initialState = {
 	privateKey: null,
-	publicKey: null
+	address: null
 };
 
 export const AppContext = createContext(initialState);
@@ -19,7 +19,7 @@ export const AppContextProvider = ({ children }) => {
 		<AppContext.Provider
 			value={{
 				privateKey: state.privateKey,
-				publicKey: state.publicKey,
+				address: state.address,
 				saveAppKeys,
 				dispatch
 			}}

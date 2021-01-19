@@ -4,11 +4,12 @@ import ModalWrapper from '../global/ModalWrapper';
 import Wallet from '../../utils/blockchain/wallet';
 import QRScanner from '../qr_scanner';
 import { AppContext } from '../../contexts/AppContext';
+import { savePasscode } from '../../utils/sessionManager';
 
 const PASSCODE_LENGTH = 6;
 
 export default function Main() {
-	const { publicKey, privateKey, saveAppKeys } = useContext(AppContext);
+	const { address, saveAppKeys } = useContext(AppContext);
 
 	const [showWallet, setShowWallet] = useState(false);
 	const [showModal, setShowModal] = useState({
@@ -17,7 +18,6 @@ export default function Main() {
 	});
 	const [passcode, setPasscode] = useState('');
 	const [confirmPasscode, setConfirmPasscode] = useState('');
-	const [hasEthAddress, setHasEthAddress] = useState(false);
 	const [passCodeMatch, setPasscodeMatch] = useState(true);
 	const [loading, setLoading] = useState(false);
 
@@ -39,8 +39,10 @@ export default function Main() {
 		const { value } = e.target;
 		setConfirmPasscode(value);
 		if (value.length === PASSCODE_LENGTH) {
-			if (value === passcode) setShowWallet(true);
-			else setPasscodeMatch(false);
+			if (value === passcode) {
+				setShowWallet(true);
+				savePasscode(value);
+			} else setPasscodeMatch(false);
 			return;
 		}
 		setShowWallet(false);
@@ -59,10 +61,9 @@ export default function Main() {
 			const w = new Wallet({ passcode });
 			const res = await w.create();
 			if (res) {
-				const { privateKey, publicKey } = res;
-				saveAppKeys({ privateKey, publicKey });
+				const { privateKey, address } = res;
+				saveAppKeys({ privateKey, address });
 				resetFormStates();
-				setHasEthAddress(true);
 				toggleModal();
 			}
 		} catch (err) {
@@ -73,9 +74,6 @@ export default function Main() {
 	const handleSubmit = () => {
 		console.log('SUBMIT');
 	};
-
-	console.log({ publicKey });
-	console.log({ privateKey });
 
 	return (
 		<div>
@@ -189,10 +187,10 @@ export default function Main() {
 					<h4 className="subtitle">Welcome Buddy,</h4>
 				</div>
 				<div className="section mt-2 mb-5" id="cmpInfo">
-					{hasEthAddress ? (
+					{address ? (
 						<div className="card">
 							<div className="pl-4 pt-3 pr-4 text-center">
-								{publicKey && <QRScanner publicKey={publicKey} />}
+								<QRScanner address={address} />
 							</div>
 						</div>
 					) : (

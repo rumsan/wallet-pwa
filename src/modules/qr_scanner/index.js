@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useQRCode } from 'react-qrcodes';
 
-export default function Index({ publicKey }) {
+export default function Index({ address }) {
 	const [balance, setBalance] = useState(0);
 	const test_balance = 500;
 
@@ -10,7 +10,7 @@ export default function Index({ publicKey }) {
 	}, []);
 
 	const [inputRef] = useQRCode({
-		text: `${publicKey ? publicKey : 'No address linked.'}`,
+		text: `${address ? address : 'No address linked.'}`,
 		options: {
 			level: 'M',
 			margin: 7,
@@ -30,7 +30,7 @@ export default function Index({ publicKey }) {
 					<canvas ref={inputRef} />
 				</div>
 				<div className="card-body text-center" style={{ marginTop: '-25px' }}>
-					<h5 className="card-text infoAddress text-bold">{publicKey}</h5>
+					<h5 className="card-text infoAddress text-bold">{address}</h5>
 					<small style={{ fontSize: 10 }}>
 						Scan the QR Code or use the address to receive tokens to your account.
 					</small>

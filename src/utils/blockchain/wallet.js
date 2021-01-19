@@ -1,7 +1,7 @@
 import store from 'store';
 import { ethers } from 'ethers';
 
-import { logout, getEncryptedWallet, saveEncyptedWallet } from '../sessionManager';
+import { logout, getEncryptedWallet, saveEncyptedWallet, getPasscode } from '../sessionManager';
 
 const storeName = 'sanduk';
 const Network_Url = 'http://localhost:4001';
@@ -20,26 +20,25 @@ export default class {
 		if (mnemonic) wallet = ethers.Wallet.fromMnemonic(mnemonic);
 		else wallet = ethers.Wallet.createRandom();
 
-		const { privateKey, publicKey } = wallet;
+		const { address, privateKey } = wallet;
 		const encryptedWallet = await wallet.encrypt(passcode);
 		saveEncyptedWallet(encryptedWallet);
-		console.log({ privateKey });
-		console.log({ publicKey });
-		return { privateKey, publicKey, wallet };
+		return { privateKey, address, wallet };
 	}
 
 	async load(passcode) {
 		let wallet = this.loadFromChabi();
 		if (!wallet) {
-			wallet = await this.loadFromSanduk(passcode);
+			wallet = await this.loadUsingAppChabi(passcode);
 		}
+		console.log('Wallet==>', wallet);
 		const provider = new ethers.providers.JsonRpcProvider(Network_Url);
 		wallet = wallet.connect(provider);
 		return wallet;
 	}
 
-	loadFromSanduk(passcode) {
-		passcode = passcode || store.get('appChabi');
+	loadUsingAppChabi(passcode) {
+		passcode = passcode || getPasscode();
 		if (!passcode) {
 			throw Error('Passcode must be set first');
 		}
@@ -48,8 +47,9 @@ export default class {
 		return ethers.Wallet.fromEncryptedJson(encryptedWallet, passcode);
 	}
 
-	loadFromChabi() {
-		const chabi = store.get('chabi'); // Chabi is private key
+	loadFromChabi(chabi) {
+		console.log({ chabi });
+		// /	const chabi = store.get('chabi'); // Chabi is private key
 		if (!chabi) return null;
 		return new ethers.Wallet(chabi);
 	}
