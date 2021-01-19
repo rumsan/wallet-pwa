@@ -1,41 +1,65 @@
-import store from "store";
-import web3 from "./web3";
+import store from 'store';
+import { ethers } from 'ethers';
 
-import { hdkey } from "ethereumjs-wallet";
+import { logout, getEncryptedWallet, saveEncyptedWallet } from '../sessionManager';
 
-const bip39 = require("bip39");
-
-const EthWallet = { bip39, hdkey };
+const storeName = 'sanduk';
+const Network_Url = 'http://localhost:4001';
 
 export default class {
-  constructor({ passcode }) {
-    this.passcode = passcode;
-  }
+	constructor({ passcode }) {
+		this.passcode = passcode;
+	}
+	async create(mnemonic) {
+		const passcode = this.passcode;
+		if (!passcode) {
+			throw Error('Passcode must be set first');
+		}
+		let wallet = getEncryptedWallet();
+		if (wallet) return { wallet: null, encryptedWallet: wallet };
+		if (mnemonic) wallet = ethers.Wallet.fromMnemonic(mnemonic);
+		else wallet = ethers.Wallet.createRandom();
 
-  create() {
-    const mnemonic = EthWallet.bip39.generateMnemonic();
-    this.createFromSeed({ mnemonic });
-  }
+		const { privateKey, publicKey } = wallet;
+		const encryptedWallet = await wallet.encrypt(passcode);
+		saveEncyptedWallet(encryptedWallet);
+		console.log({ privateKey });
+		console.log({ publicKey });
+		return { privateKey, publicKey, wallet };
+	}
 
-  createFromSeed({ mnemonic }) {
-    console.log("Mnemonic======>", mnemonic);
-    const seed = EthWallet.bip39.mnemonicToSeedSync(mnemonic);
-    const hdwallet = EthWallet.hdkey.fromMasterSeed(seed);
-    const walletHDpath = "m/44'/60'/0'/0/";
-    const wallet = hdwallet.derivePath(walletHDpath + 0).getWallet();
-    console.log("Wallet:", wallet);
-    const address = `0x${wallet.getAddress().toString("hex")}`;
-    const privateKey = wallet.getPrivateKey().toString("hex");
+	async load(passcode) {
+		let wallet = this.loadFromChabi();
+		if (!wallet) {
+			wallet = await this.loadFromSanduk(passcode);
+		}
+		const provider = new ethers.providers.JsonRpcProvider(Network_Url);
+		wallet = wallet.connect(provider);
+		return wallet;
+	}
 
-    web3.eth.accounts.wallet.add({ address, privateKey });
-    web3.eth.accounts.wallet.save(this.passcode, "wallet");
-  }
+	loadFromSanduk(passcode) {
+		passcode = passcode || store.get('appChabi');
+		if (!passcode) {
+			throw Error('Passcode must be set first');
+		}
+		const encryptedWallet = getEncryptedWallet();
+		if (!encryptedWallet) throw Error('No local wallet found');
+		return ethers.Wallet.fromEncryptedJson(encryptedWallet, passcode);
+	}
 
-  load() {
-    const passcode = store.get("passcode");
-    const accounts = web3.eth.accounts.wallet.load(passcode, "wallet");
-    return accounts[0];
-  }
+	loadFromChabi() {
+		const chabi = store.get('chabi'); // Chabi is private key
+		if (!chabi) return null;
+		return new ethers.Wallet(chabi);
+	}
 
-  clear() {}
+	getAddress() {
+		if (!store.get(storeName)) return null;
+		return JSON.parse(store.get(storeName)).address;
+	}
+
+	clear() {
+		logout();
+	}
 }

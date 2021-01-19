@@ -1,4 +1,4 @@
 module.exports = {
-	GET_PRIVATE_KEY: 'Get_Private_Key',
-	SET_PRIVATE_KEY: 'Set_Private_Key'
+	GET_WALLET_KEYS: 'get_wallet_keys',
+	SET_WALLET_KEYS: 'set_wallet_keys'
 };

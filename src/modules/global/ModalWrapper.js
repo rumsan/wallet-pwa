@@ -7,7 +7,7 @@ export default function ModalWrapper(props) {
 		<>
 			<Modal show={props.showModal || false} onHide={props.handleModal}>
 				<Modal.Header closeButton>
-					<Modal.Title>{props.title || 'My Modal'}</Modal.Title>
+					<Modal.Title style={{ fontSize: 14 }}>{props.title || 'My Modal'}</Modal.Title>
 				</Modal.Header>
 				<Modal.Body>{props.children}</Modal.Body>
 				{props.showFooter && (
