@@ -4,7 +4,8 @@ import APP_ACTIONS from '../actions/appActions';
 
 const initialState = {
 	privateKey: null,
-	address: null
+	address: null,
+	lockScreen: false
 };
 
 export const AppContext = createContext(initialState);
@@ -15,11 +16,17 @@ export const AppContextProvider = ({ children }) => {
 		dispatch({ type: APP_ACTIONS.SET_WALLET_KEYS, data: keys });
 	}
 
+	function lockAppScreen() {
+		dispatch({ type: APP_ACTIONS.LOCK_APP, data: true });
+	}
+
 	return (
 		<AppContext.Provider
 			value={{
 				privateKey: state.privateKey,
 				address: state.address,
+				lockScreen: state.lockScreen,
+				lockAppScreen,
 				saveAppKeys,
 				dispatch
 			}}

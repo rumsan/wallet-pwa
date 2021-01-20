@@ -1,15 +1,17 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 
 import ModalWrapper from '../global/ModalWrapper';
+import Loading from '../global/Loading';
 import Wallet from '../../utils/blockchain/wallet';
 import QRScanner from '../qr_scanner';
+import SetupButton from './setupButton';
 import { AppContext } from '../../contexts/AppContext';
-import { savePasscode } from '../../utils/sessionManager';
+import { savePasscode, getEncryptedWallet } from '../../utils/sessionManager';
 
 const PASSCODE_LENGTH = 6;
 
 export default function Main() {
-	const { address, saveAppKeys } = useContext(AppContext);
+	const { lockScreen, lockAppScreen, address, saveAppKeys } = useContext(AppContext);
 
 	const [showWallet, setShowWallet] = useState(false);
 	const [showModal, setShowModal] = useState({
@@ -19,15 +21,26 @@ export default function Main() {
 	const [passcode, setPasscode] = useState('');
 	const [confirmPasscode, setConfirmPasscode] = useState('');
 	const [passCodeMatch, setPasscodeMatch] = useState(true);
-	const [loading, setLoading] = useState(false);
+	const [loadingModal, setLoadingModal] = useState(false);
+
+	const fetchWallet = () => {
+		const existingWallet = getEncryptedWallet();
+		if (existingWallet) {
+			lockAppScreen();
+		}
+	};
+
+	useEffect(fetchWallet, []);
 
 	const toggleModal = modalName => {
+		if (!modalName) {
+			setShowModal({ passcodeModal: false, restoreModal: false });
+			return;
+		}
 		if (modalName === 'passcodeModal') {
 			setShowModal({ passcodeModal: true, restoreModal: false });
 		} else if (modalName === 'restoreModal') {
 			setShowModal({ passcodeModal: false, restoreModal: true });
-		} else {
-			setShowModal({ passcodeModal: false, restoreModal: false });
 		}
 	};
 
@@ -52,12 +65,13 @@ export default function Main() {
 		setPasscode('');
 		setConfirmPasscode('');
 		setPasscode(true);
-		setLoading(false);
+		setLoadingModal(false);
 	};
 
 	const handleWalletCreate = async () => {
 		try {
-			setLoading(true);
+			toggleModal();
+			setLoadingModal(true);
 			const w = new Wallet({ passcode });
 			const res = await w.create();
 			if (res) {
@@ -76,7 +90,7 @@ export default function Main() {
 	};
 
 	return (
-		<div>
+		<div id="appCapsule">
 			<ModalWrapper
 				title="Restore your wallet"
 				showModal={showModal.restoreModal}
@@ -145,42 +159,36 @@ export default function Main() {
 				</div>
 				{showWallet && (
 					<div>
-						{loading ? (
-							'Creating wallet, please wait...'
-						) : (
-							<>
-								<button
-									onClick={handleWalletCreate}
-									id="btnNewWallet"
-									type="button"
-									className="btn btn-block btn-linkedin mb-2"
-								>
-									<ion-icon
-										name="add-circle-outline"
-										className="md hydrated"
-										aria-label="Create New Wallet"
-									/>
-									Create New Wallet
-								</button>
-								<button
-									onClick={() => toggleModal('restoreModal')}
-									id="btnRestoreWallet"
-									type="button"
-									className="btn btn-block btn-bitcoin"
-								>
-									<ion-icon
-										name="wallet-outline"
-										className="md hydrated"
-										aria-label="Restore Existing Wallet"
-									/>
-									Restore Existing Wallet
-								</button>
-							</>
-						)}
+						<button
+							onClick={handleWalletCreate}
+							id="btnNewWallet"
+							type="button"
+							className="btn btn-block btn-linkedin mb-2"
+						>
+							<ion-icon
+								name="add-circle-outline"
+								className="md hydrated"
+								aria-label="Create New Wallet"
+							/>
+							Create New Wallet
+						</button>
+						<button
+							onClick={() => toggleModal('restoreModal')}
+							id="btnRestoreWallet"
+							type="button"
+							className="btn btn-block btn-bitcoin"
+						>
+							<ion-icon
+								name="wallet-outline"
+								className="md hydrated"
+								aria-label="Restore Existing Wallet"
+							/>
+							Restore Existing Wallet
+						</button>
 					</div>
 				)}
 			</ModalWrapper>
-
+			<Loading message="Creating your new wallet. Please wait..." showModal={loadingModal} />
 			<div id="cmpCreateWallet">
 				<div className="header-large-title">
 					<h1 className="title">Rumsan Wallet</h1>
@@ -196,30 +204,19 @@ export default function Main() {
 					) : (
 						<div className="card mt-5">
 							<div className="card-header">
-								<h4>
-									Let's setup your wallet. You can either create a new wallet or restore existing
-									wallet. Let's begin.
-								</h4>
+								{lockScreen ? (
+									<h4 className="text-center">
+										<ion-icon name="lock-closed" /> Unlock your screen by tapping on lock icon at
+										bottom of screen.
+									</h4>
+								) : (
+									<h4>
+										Let's setup your wallet. You can either create a new wallet or restore existing
+										wallet. Let's begin.
+									</h4>
+								)}
 							</div>
-							<div className="card-body text-center">
-								<div className="row">
-									<div className="col-md-12 pr-3 pl-3">
-										<button
-											onClick={() => toggleModal('passcodeModal')}
-											id="btnSetupWallet"
-											type="button"
-											className="btn btn-block btn-linkedin mb-2"
-										>
-											<ion-icon
-												name="wallet-outline"
-												className="md hydrated"
-												aria-label="Create New Wallet"
-											/>
-											Setup My Wallet
-										</button>
-									</div>
-								</div>
-							</div>
+							{!lockScreen && <SetupButton toggleModal={toggleModal} />}
 						</div>
 					)}
 				</div>

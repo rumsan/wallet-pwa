@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useQRCode } from 'react-qrcodes';
+const TEST_BALANCE = 0.0;
 
 export default function Index({ address }) {
 	const [balance, setBalance] = useState(0);
-	const test_balance = 500;
 
 	useEffect(() => {
-		setBalance(test_balance);
+		setBalance(TEST_BALANCE);
 	}, []);
 
 	const [inputRef] = useQRCode({
@@ -15,11 +15,11 @@ export default function Index({ address }) {
 			level: 'M',
 			margin: 7,
 			scale: 1,
-			width: 300,
-			color: {
-				dark: '#010599FF',
-				light: '#FFBF60FF'
-			}
+			width: 300
+			// color: {
+			// 	dark: '#010599FF',
+			// 	light: '#FFBF60FF'
+			// }
 		}
 	});
 
