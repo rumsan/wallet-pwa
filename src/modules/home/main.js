@@ -7,8 +7,9 @@ import QRScanner from '../qr_scanner';
 import SetupButton from './setupButton';
 import { AppContext } from '../../contexts/AppContext';
 import { savePasscode, getEncryptedWallet } from '../../utils/sessionManager';
+import { APP_CONSTANTS } from '../../constants';
 
-const PASSCODE_LENGTH = 6;
+const { PASSCODE_LENGTH } = APP_CONSTANTS;
 
 export default function Main() {
 	const { lockScreen, lockAppScreen, address, saveAppKeys } = useContext(AppContext);
@@ -25,7 +26,7 @@ export default function Main() {
 
 	const fetchWallet = () => {
 		const existingWallet = getEncryptedWallet();
-		if (existingWallet) {
+		if (existingWallet && !address) {
 			lockAppScreen();
 		}
 	};
@@ -85,9 +86,7 @@ export default function Main() {
 		}
 	};
 
-	const handleSubmit = () => {
-		console.log('SUBMIT');
-	};
+	const handleSubmit = () => {};
 
 	return (
 		<div id="appCapsule">
@@ -216,7 +215,7 @@ export default function Main() {
 									</h4>
 								)}
 							</div>
-							{!lockScreen && <SetupButton toggleModal={toggleModal} />}
+							{!lockScreen && !address && <SetupButton toggleModal={toggleModal} />}
 						</div>
 					)}
 				</div>

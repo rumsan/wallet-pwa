@@ -20,12 +20,17 @@ export const AppContextProvider = ({ children }) => {
 		dispatch({ type: APP_ACTIONS.LOCK_APP, data: true });
 	}
 
+	function unlockAppScreen() {
+		dispatch({ type: APP_ACTIONS.UNLOCK_APP, data: false });
+	}
+
 	return (
 		<AppContext.Provider
 			value={{
 				privateKey: state.privateKey,
 				address: state.address,
 				lockScreen: state.lockScreen,
+				unlockAppScreen,
 				lockAppScreen,
 				saveAppKeys,
 				dispatch

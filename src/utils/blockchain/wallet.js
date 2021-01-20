@@ -38,8 +38,7 @@ export default class {
 		return { privateKey, address };
 	}
 
-	async loadUsingAppChabi(passcode = 123456) {
-		//passcode = passcode || getPasscode();
+	async loadUsingAppChabi(passcode) {
 		if (!passcode) {
 			throw Error('Passcode must be set first');
 		}
@@ -51,7 +50,6 @@ export default class {
 
 	loadFromChabi(chabi) {
 		//	chabi = '0x436d1e3dd7baf2d7696c9daec8791118e8d719b140a5f09f6cd69a075ec9d6a6';
-		console.log({ chabi });
 		// /	const chabi = store.get('chabi'); // Chabi is private key
 		if (!chabi) return null;
 		return new ethers.Wallet(chabi);

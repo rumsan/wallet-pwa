@@ -1,9 +1,9 @@
 import APP_ACTIONS from '../actions/appActions';
 
 export default (state, action) => {
-	const { privateKey, address } = action.data;
 	switch (action.type) {
 		case APP_ACTIONS.SET_WALLET_KEYS:
+			const { privateKey, address } = action.data;
 			return {
 				...state,
 				privateKey: privateKey,
@@ -11,6 +11,12 @@ export default (state, action) => {
 			};
 
 		case APP_ACTIONS.LOCK_APP:
+			return {
+				...state,
+				lockScreen: action.data
+			};
+
+		case APP_ACTIONS.UNLOCK_APP:
 			return {
 				...state,
 				lockScreen: action.data

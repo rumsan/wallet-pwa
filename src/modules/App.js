@@ -1,7 +1,8 @@
 import React from 'react';
-import Home from '../modules/home';
 import { BrowserRouter, Switch, Route } from 'react-router-dom';
-import { History } from '../utils/history';
+
+import Home from '../modules/home';
+import UnlockWallet from '../modules/wallet/unlock';
 
 import { AppContextProvider } from '../contexts/AppContext';
 
@@ -9,9 +10,10 @@ function App() {
 	return (
 		<>
 			<AppContextProvider>
-				<BrowserRouter history={History}>
+				<BrowserRouter>
 					<Switch>
-						<Route component={Home} />
+						<Route path="/unlock" component={UnlockWallet} />
+						<Route path="/" component={Home} />
 					</Switch>
 				</BrowserRouter>
 			</AppContextProvider>
