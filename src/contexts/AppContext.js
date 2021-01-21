@@ -1,10 +1,12 @@
 import React, { createContext, useReducer } from 'react';
 import appReduce from '../reducers/appReducer';
 import APP_ACTIONS from '../actions/appActions';
+import { getNetworkByName } from '../constants/networks';
+import { saveCurrentNetwork } from '../utils/sessionManager';
 
 const initialState = {
 	privateKey: null,
-	address: null,
+	address: null, // Public Key
 	lockScreen: false,
 	scannedEthAddress: ''
 };
@@ -29,6 +31,16 @@ export const AppContextProvider = ({ children }) => {
 		dispatch({ type: APP_ACTIONS.SET_SCANNED_ADDRESS, data: address });
 	}
 
+	function changeCurrentNetwork(name, url) {
+		let network = null;
+		if (name === 'custom') {
+			network = { name: 'custom', url, display: 'Custom Network' };
+		} else {
+			network = getNetworkByName(name);
+		}
+		saveCurrentNetwork(network);
+	}
+
 	return (
 		<AppContext.Provider
 			value={{
@@ -36,6 +48,7 @@ export const AppContextProvider = ({ children }) => {
 				address: state.address,
 				lockScreen: state.lockScreen,
 				scannedEthAddress: state.scannedEthAddress,
+				changeCurrentNetwork,
 				saveScannedAddress,
 				unlockAppScreen,
 				lockAppScreen,

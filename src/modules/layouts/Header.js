@@ -1,10 +1,11 @@
-import React from 'react';
-import store from 'store';
+import React, { useContext } from 'react';
+import { AppContext } from '../../contexts/AppContext';
 
 export default function Header() {
-	const handleLogout = () => {
-		store.clearAll();
-		window.location.reload();
+	const { lockAppScreen } = useContext(AppContext);
+
+	const handleLockAppClick = () => {
+		lockAppScreen();
 	};
 
 	return (
@@ -17,8 +18,8 @@ export default function Header() {
 				</div>
 				<div className="pageTitle">Rumsan Sanduk</div>
 				<div className="right">
-					<a href="/" onClick={handleLogout} className="headerButton logout">
-						<ion-icon name="log-out-outline" />
+					<a href="#lock" title="Lock wallet" onClick={handleLockAppClick} className="headerButton logout">
+						<ion-icon name="wallet-outline" />
 					</a>
 				</div>
 			</div>

@@ -1,10 +1,11 @@
 import React, { useContext, useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
-import { Link, useHistory } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import { ethers } from 'ethers';
 import { AppContext } from '../../contexts/AppContext';
 import Wallet from '../../utils/blockchain/wallet';
 import Loading from '../global/Loading';
+import AppHeader from '../layouts/AppHeader';
 
 export default function Index() {
 	const { privateKey, scannedEthAddress } = useContext(AppContext);
@@ -69,7 +70,7 @@ export default function Index() {
 			setTimeout(async () => {
 				try {
 					const w = new Wallet({});
-					const wallet = await w.loadFromPrivayKey(privateKey);
+					const wallet = await w.loadFromPrivateKey(privateKey);
 					const receipt = await wallet.sendTransaction({
 						to: data.sendToAddress,
 						value: ethers.utils.parseEther(data.sendAmount.toString())
@@ -103,19 +104,7 @@ export default function Index() {
 	return (
 		<>
 			<Loading showModal={loadingModal} message="Transferring tokens. Please wait..." />
-			<div className="appHeader bg-primary text-light">
-				<div className="left">
-					<Link to="/" className="headerButton goBack">
-						<ion-icon name="chevron-back-outline" />
-					</Link>
-				</div>
-				<div className="pageTitle">Transfer</div>
-				<div className="right">
-					<Link to="/" className="headerButton">
-						<ion-icon name="home-outline" />
-					</Link>
-				</div>
-			</div>
+			<AppHeader currentMenu="Transfer" />
 
 			<div id="cmpMain">
 				<div className="section mt-2 mb-5">

@@ -17,7 +17,7 @@ const camStyle = {
 	padding: '50px',
 	marginBottom: '25px'
 };
-const SCAN_DELAY = 500;
+const SCAN_DELAY = 600;
 
 export default function UnlockedFooter() {
 	let history = useHistory();
@@ -38,7 +38,7 @@ export default function UnlockedFooter() {
 	};
 	return (
 		<>
-			<ModalWrapper title="Scan QR Code" showModal={scanModal} handleModal={handleScanModalToggle}>
+			<ModalWrapper title="Scan a QR Code" showModal={scanModal} handleModal={handleScanModalToggle}>
 				<div style={camStyle}>
 					<QrReader
 						delay={SCAN_DELAY}
@@ -75,12 +75,12 @@ export default function UnlockedFooter() {
 							<strong>History</strong>
 						</div>
 					</a>
-					<a href="#home" className="item">
+					<Link to="/settings" className="item">
 						<div className="col">
 							<ion-icon name="options-outline" />
 							<strong>Settings</strong>
 						</div>
-					</a>
+					</Link>
 				</div>
 			</div>
 		</>

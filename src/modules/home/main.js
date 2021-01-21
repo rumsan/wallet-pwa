@@ -10,10 +10,9 @@ import { getPublicKey, savePublickey, getEncryptedWallet } from '../../utils/ses
 import { APP_CONSTANTS } from '../../constants';
 
 const { PASSCODE_LENGTH } = APP_CONSTANTS;
-const publicKey = getPublicKey();
 
 export default function Main() {
-	const { lockScreen, lockAppScreen, address, saveAppKeys } = useContext(AppContext);
+	const { lockScreen, address, lockAppScreen, saveAppKeys } = useContext(AppContext);
 
 	const [showWallet, setShowWallet] = useState(false);
 	const [showModal, setShowModal] = useState({
@@ -24,9 +23,12 @@ export default function Main() {
 	const [confirmPasscode, setConfirmPasscode] = useState('');
 	const [passCodeMatch, setPasscodeMatch] = useState(true);
 	const [loadingModal, setLoadingModal] = useState(false);
+	const [publicKey, setPublicKey] = useState('');
 
 	const fetchWallet = () => {
 		const existingWallet = getEncryptedWallet();
+		const publicKey = getPublicKey(); // Check from localstorage
+		setPublicKey(publicKey);
 		if (existingWallet && !address) {
 			lockAppScreen();
 		}
@@ -195,10 +197,10 @@ export default function Main() {
 					<h4 className="subtitle">Welcome Buddy,</h4>
 				</div>
 				<div className="section mt-2 mb-5" id="cmpInfo">
-					{publicKey ? (
+					{address || publicKey ? (
 						<div className="card">
 							<div className="pl-4 pt-3 pr-4 text-center">
-								<QRScanner publicKey={publicKey} />
+								<QRScanner publicKey={address} />
 							</div>
 						</div>
 					) : (
@@ -216,7 +218,7 @@ export default function Main() {
 									</h4>
 								)}
 							</div>
-							{!lockScreen && !publicKey && <SetupButton toggleModal={toggleModal} />}
+							{!lockScreen && !address && <SetupButton toggleModal={toggleModal} />}
 						</div>
 					)}
 				</div>

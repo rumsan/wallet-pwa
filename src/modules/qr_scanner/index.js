@@ -3,15 +3,25 @@ import { useQRCode } from 'react-qrcodes';
 import { ethers } from 'ethers';
 import { AppContext } from '../../contexts/AppContext';
 
-import { APP_CONSTANTS } from '../../constants';
-const NETWORK_URL = APP_CONSTANTS.BLOCKCHAIN_NETWORK;
+import { getCurrentNetwork } from '../../utils/sessionManager';
+import { getNetworkByName } from '../../constants/networks';
 
 export default function Index({ publicKey }) {
 	const [balance, setBalance] = useState('');
+	const [blockchainNetwork, setBlockchainNetwork] = useState(null);
 	const { lockScreen } = useContext(AppContext);
 
+	const fetchCurrentNetwork = () => {
+		let network = getCurrentNetwork();
+		if (!network) network = getNetworkByName();
+		return network;
+	};
+
 	const fetchMyBalance = () => {
-		const provider = new ethers.providers.JsonRpcProvider(NETWORK_URL);
+		const network = fetchCurrentNetwork();
+		setBlockchainNetwork(network);
+		const { url } = network;
+		const provider = new ethers.providers.JsonRpcProvider(url);
 		provider
 			.getBalance(publicKey)
 			.then(balance => {
@@ -52,7 +62,9 @@ export default function Index({ publicKey }) {
 					<div className="row">
 						<div className="col">
 							<small>
-								<span className="infoNetwork" style={{ fontStyle: 'italic' }} />
+								<span className="infoNetwork" style={{ fontStyle: 'italic' }}>
+									{blockchainNetwork && blockchainNetwork.display}
+								</span>
 							</small>
 						</div>
 						<div className="col">
