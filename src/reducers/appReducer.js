@@ -10,6 +10,12 @@ export default (state, action) => {
 				address: address
 			};
 
+		case APP_ACTIONS.SET_SCANNED_ADDRESS:
+			return {
+				...state,
+				scannedEthAddress: action.data
+			};
+
 		case APP_ACTIONS.LOCK_APP:
 			return {
 				...state,

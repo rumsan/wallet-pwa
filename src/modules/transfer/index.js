@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { AppContext } from '../../contexts/AppContext';
 
 export default function Index() {
+	const { scannedEthAddress } = useContext(AppContext);
 	return (
 		<>
 			<div className="appHeader bg-primary text-light">
@@ -35,6 +37,8 @@ export default function Index() {
 												id="sendToAddr"
 												name="sendToAddr"
 												placeholder="Enter receiver's address"
+												value={scannedEthAddress ? scannedEthAddress : ''}
+												readOnly
 											/>
 											<i className="clear-input">
 												<ion-icon
