@@ -1,11 +1,8 @@
-import store from 'store';
 import { ethers } from 'ethers';
 
 import { logout, getEncryptedWallet, saveEncyptedWallet } from '../sessionManager';
-window.ethers = ethers;
-
-const storeName = 'sanduk';
-const Network_Url = 'http://157.245.125.194:8501';
+import { APP_CONSTANTS } from '../../constants';
+const NETWORK_URL = APP_CONSTANTS.BLOCKCHAIN_NETWORK;
 
 export default class {
 	constructor({ passcode }) {
@@ -27,12 +24,21 @@ export default class {
 		return { privateKey, address, wallet };
 	}
 
+	async loadFromPrivayKey(privateKey) {
+		if (!privateKey) return null;
+		let wallet = await new ethers.Wallet(privateKey);
+		if (!wallet) throw Error('Wallet not found');
+		const provider = new ethers.providers.JsonRpcProvider(NETWORK_URL);
+		wallet = wallet.connect(provider);
+		return wallet;
+	}
+
 	async load(passcode) {
 		let wallet = this.loadFromChabi();
 		if (!wallet) {
 			wallet = await this.loadUsingAppChabi(passcode);
 		}
-		const provider = new ethers.providers.JsonRpcProvider(Network_Url);
+		const provider = new ethers.providers.JsonRpcProvider(NETWORK_URL);
 		wallet = wallet.connect(provider);
 		const { address, privateKey } = wallet;
 		return { privateKey, address };
@@ -49,15 +55,8 @@ export default class {
 	}
 
 	loadFromChabi(chabi) {
-		//	chabi = '0x436d1e3dd7baf2d7696c9daec8791118e8d719b140a5f09f6cd69a075ec9d6a6';
-		// /	const chabi = store.get('chabi'); // Chabi is private key
 		if (!chabi) return null;
 		return new ethers.Wallet(chabi);
-	}
-
-	getAddress() {
-		if (!store.get(storeName)) return null;
-		return JSON.parse(store.get(storeName)).address;
 	}
 
 	clear() {

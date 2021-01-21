@@ -5,6 +5,5 @@ import UnlockedFooter from './UnlockedFooter';
 
 export default function Footer() {
 	const { lockScreen } = useContext(AppContext);
-	console.log('FOoter Lock==>', lockScreen);
 	return <>{lockScreen === true ? <LockedFooter /> : <UnlockedFooter />}</>;
 }

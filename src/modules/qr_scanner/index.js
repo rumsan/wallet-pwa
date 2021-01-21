@@ -1,13 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { useQRCode } from 'react-qrcodes';
-const TEST_BALANCE = 0.0;
+import { ethers } from 'ethers';
+
+import { APP_CONSTANTS } from '../../constants';
+const NETWORK_URL = APP_CONSTANTS.BLOCKCHAIN_NETWORK;
 
 export default function Index({ address }) {
-	const [balance, setBalance] = useState(0);
+	const [balance, setBalance] = useState('');
 
-	useEffect(() => {
-		setBalance(TEST_BALANCE);
-	}, []);
+	const fetchMyBalance = () => {
+		const provider = new ethers.providers.JsonRpcProvider(NETWORK_URL);
+		provider
+			.getBalance(address)
+			.then(balance => {
+				const myBalance = ethers.utils.formatEther(balance);
+				setBalance(myBalance);
+			})
+			.catch(err => {
+				setBalance(0);
+			});
+	};
+
+	useEffect(fetchMyBalance, []);
 
 	const [inputRef] = useQRCode({
 		text: `${address ? address : 'No address linked.'}`,
@@ -16,10 +30,6 @@ export default function Index({ address }) {
 			margin: 7,
 			scale: 1,
 			width: 300
-			// color: {
-			// 	dark: '#010599FF',
-			// 	light: '#FFBF60FF'
-			// }
 		}
 	});
 
@@ -44,7 +54,7 @@ export default function Index({ address }) {
 						</div>
 						<div className="col">
 							<h3 className="card-text text-right">
-								Balance: {balance} <span className="infoBalance" />
+								Balance: {balance ? balance : 'Fetching...'} <span className="infoBalance" />
 							</h3>
 						</div>
 					</div>

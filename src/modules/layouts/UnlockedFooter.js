@@ -13,8 +13,9 @@ const previewStyle = {
 const camStyle = {
 	display: 'flex',
 	justifyContent: 'center',
-	marginTop: '-30px',
-	padding: '50px'
+	marginTop: '-50px',
+	padding: '50px',
+	marginBottom: '25px'
 };
 const SCAN_DELAY = 500;
 

@@ -1,11 +1,108 @@
-import React, { useContext } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useContext, useState, useEffect } from 'react';
+import Swal from 'sweetalert2';
+import { Link, useHistory } from 'react-router-dom';
+import { ethers } from 'ethers';
 import { AppContext } from '../../contexts/AppContext';
+import Wallet from '../../utils/blockchain/wallet';
+import Loading from '../global/Loading';
 
 export default function Index() {
-	const { scannedEthAddress } = useContext(AppContext);
+	const { privateKey, scannedEthAddress } = useContext(AppContext);
+	let history = useHistory();
+
+	const [sendAmount, setSendAmount] = useState('');
+	const [sendToAddress, setSendToAddress] = useState('');
+	const [loadingModal, setLoadingModal] = useState(false);
+
+	const handleSendToChange = e => {
+		setSendToAddress(e.target.value);
+	};
+
+	const handleSendAmtChange = e => {
+		setSendAmount(e.target.value);
+	};
+
+	const resetFormStates = () => {
+		setLoadingModal(false);
+		setSendAmount('');
+		setSendAmount('');
+	};
+
+	const sendSuccess = (data, receipt) => {
+		resetFormStates();
+		Swal.fire({
+			title: 'Success',
+			html: `You sent <b>${data.sendAmount}</b> ethers to <b>${data.sendToAddress}</b>.<br>
+      Your confirmation code is <b>${receipt.hash}</b>.<br>So far your account has completed ${
+				receipt.nonce + 1
+			} transactions.`,
+			icon: 'success',
+			confirmButtonColor: '#3085d6',
+			cancelButtonColor: '#d33',
+			confirmButtonText: 'Okay'
+		}).then(result => {
+			if (result.value) {
+				history.push('/');
+			}
+		});
+	};
+
+	const confirmAndSend = async data => {
+		const isConfirm = await Swal.fire({
+			title: 'Are you sure?',
+			html: `You are sending <b>${data.sendAmount}</b> ethers to <b>${data.sendToAddress}</b>.<br>Please double check the address and the amount.`,
+			showCancelButton: true,
+			confirmButtonColor: '#3085d6',
+			cancelButtonColor: '#d33',
+			confirmButtonText: 'Yes',
+			cancelButtonText: 'No'
+		});
+		if (isConfirm.value) {
+			send(data);
+		}
+	};
+
+	const send = async data => {
+		try {
+			if (!ethers.utils.isAddress(data.sendToAddress)) throw Error('Destination address is invalid');
+			setLoadingModal(true);
+			setTimeout(async () => {
+				try {
+					const w = new Wallet({});
+					const wallet = await w.loadFromPrivayKey(privateKey);
+					const receipt = await wallet.sendTransaction({
+						to: data.sendToAddress,
+						value: ethers.utils.parseEther(data.sendAmount.toString())
+					});
+					sendSuccess(data, receipt);
+				} catch (e) {
+					Swal.fire('ERROR', e.error.message, 'error');
+				} finally {
+					setLoadingModal(false);
+				}
+			}, 250);
+		} catch (e) {
+			Swal.fire('ERROR', e.message, 'error');
+		}
+	};
+
+	const handleSendClick = () => {
+		if (!sendAmount || !sendToAddress) {
+			return Swal.fire({ title: 'ERROR', icon: 'error', text: 'Send amount and receiver address is required' });
+		}
+		confirmAndSend({ sendAmount, sendToAddress });
+	};
+
+	useEffect(() => {
+		if (!privateKey) {
+			history.push('/');
+		}
+		scannedEthAddress && setSendToAddress(scannedEthAddress);
+	}, [history, privateKey, scannedEthAddress]);
+
 	return (
 		<>
+			<Loading showModal={loadingModal} message="Transferring tokens. Please wait..." />
 			<div className="appHeader bg-primary text-light">
 				<div className="left">
 					<Link to="/" className="headerButton goBack">
@@ -37,8 +134,8 @@ export default function Index() {
 												id="sendToAddr"
 												name="sendToAddr"
 												placeholder="Enter receiver's address"
-												value={scannedEthAddress ? scannedEthAddress : ''}
-												readOnly
+												onChange={handleSendToChange}
+												value={sendToAddress}
 											/>
 											<i className="clear-input">
 												<ion-icon
@@ -65,6 +162,8 @@ export default function Index() {
 											Amount to Send:
 										</label>
 										<input
+											onChange={handleSendAmtChange}
+											value={sendAmount}
 											type="number"
 											className="form-control"
 											id="sendAmount"
@@ -91,7 +190,7 @@ export default function Index() {
 							</form>
 						</div>
 						<div className="card-footer text-right">
-							<button type="button" id="btnSend" className="btn btn-success">
+							<button type="button" id="btnSend" className="btn btn-success" onClick={handleSendClick}>
 								<ion-icon name="send-outline" /> Send Now
 							</button>
 						</div>
