@@ -6,10 +6,11 @@ import Wallet from '../../utils/blockchain/wallet';
 import QRScanner from '../qr_scanner';
 import SetupButton from './setupButton';
 import { AppContext } from '../../contexts/AppContext';
-import { savePasscode, getEncryptedWallet } from '../../utils/sessionManager';
+import { getPublicKey, savePublickey, getEncryptedWallet } from '../../utils/sessionManager';
 import { APP_CONSTANTS } from '../../constants';
 
 const { PASSCODE_LENGTH } = APP_CONSTANTS;
+const publicKey = getPublicKey();
 
 export default function Main() {
 	const { lockScreen, lockAppScreen, address, saveAppKeys } = useContext(AppContext);
@@ -55,7 +56,6 @@ export default function Main() {
 		if (value.length === PASSCODE_LENGTH) {
 			if (value === passcode) {
 				setShowWallet(true);
-				savePasscode(value);
 			} else setPasscodeMatch(false);
 			return;
 		}
@@ -77,6 +77,7 @@ export default function Main() {
 			const res = await w.create();
 			if (res) {
 				const { privateKey, address } = res;
+				savePublickey(address);
 				saveAppKeys({ privateKey, address });
 				resetFormStates();
 				toggleModal();
@@ -194,10 +195,10 @@ export default function Main() {
 					<h4 className="subtitle">Welcome Buddy,</h4>
 				</div>
 				<div className="section mt-2 mb-5" id="cmpInfo">
-					{address ? (
+					{publicKey ? (
 						<div className="card">
 							<div className="pl-4 pt-3 pr-4 text-center">
-								<QRScanner address={address} />
+								<QRScanner publicKey={publicKey} />
 							</div>
 						</div>
 					) : (
@@ -215,7 +216,7 @@ export default function Main() {
 									</h4>
 								)}
 							</div>
-							{!lockScreen && !address && <SetupButton toggleModal={toggleModal} />}
+							{!lockScreen && !publicKey && <SetupButton toggleModal={toggleModal} />}
 						</div>
 					)}
 				</div>

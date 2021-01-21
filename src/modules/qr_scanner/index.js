@@ -1,22 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useQRCode } from 'react-qrcodes';
 import { ethers } from 'ethers';
+import { AppContext } from '../../contexts/AppContext';
 
 import { APP_CONSTANTS } from '../../constants';
 const NETWORK_URL = APP_CONSTANTS.BLOCKCHAIN_NETWORK;
 
-export default function Index({ address }) {
+export default function Index({ publicKey }) {
 	const [balance, setBalance] = useState('');
+	const { lockScreen } = useContext(AppContext);
 
 	const fetchMyBalance = () => {
 		const provider = new ethers.providers.JsonRpcProvider(NETWORK_URL);
 		provider
-			.getBalance(address)
+			.getBalance(publicKey)
 			.then(balance => {
 				const myBalance = ethers.utils.formatEther(balance);
 				setBalance(myBalance);
 			})
 			.catch(err => {
+				console.log('ERR:', err);
 				setBalance(0);
 			});
 	};
@@ -24,7 +27,7 @@ export default function Index({ address }) {
 	useEffect(fetchMyBalance, []);
 
 	const [inputRef] = useQRCode({
-		text: `${address ? address : 'No address linked.'}`,
+		text: `${publicKey ? publicKey : 'No address linked.'}`,
 		options: {
 			level: 'M',
 			margin: 7,
@@ -40,7 +43,7 @@ export default function Index({ address }) {
 					<canvas ref={inputRef} />
 				</div>
 				<div className="card-body text-center" style={{ marginTop: '-25px' }}>
-					<h5 className="card-text infoAddress text-bold">{address}</h5>
+					<h5 className="card-text infoAddress text-bold">{publicKey}</h5>
 					<small style={{ fontSize: 10 }}>
 						Scan the QR Code or use the address to receive tokens to your account.
 					</small>
@@ -53,9 +56,16 @@ export default function Index({ address }) {
 							</small>
 						</div>
 						<div className="col">
-							<h3 className="card-text text-right">
-								Balance: {balance ? balance : 'Fetching...'} <span className="infoBalance" />
-							</h3>
+							{!lockScreen ? (
+								<h3 className="card-text text-right">
+									Balance: {balance ? balance : 'Fetching...'} <span className="infoBalance" />
+								</h3>
+							) : (
+								<span style={{ fontSize: 12 }}>
+									<ion-icon name="lock-open-outline" /> Unlock your screen by tapping at lock icon
+									below.
+								</span>
+							)}
 						</div>
 					</div>
 				</div>

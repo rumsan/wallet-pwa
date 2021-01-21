@@ -9,12 +9,12 @@ export function saveEncyptedWallet(userData) {
 	localStorage.setItem('wallet', JSON.stringify(userData));
 }
 
-export function getPasscode() {
-	return localStorage.getItem('appChabi');
+export function savePublickey(pubKey) {
+	localStorage.setItem('publicKey', pubKey);
 }
 
-export function savePasscode(passcode) {
-	localStorage.setItem('appChabi', passcode);
+export function getPublicKey() {
+	return localStorage.getItem('publicKey');
 }
 
 export function logout() {
