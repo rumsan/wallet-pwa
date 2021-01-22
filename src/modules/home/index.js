@@ -1,12 +1,13 @@
 import React from 'react';
 import { Route, Switch } from 'react-router-dom';
 
-import Header from '../layouts/Header';
+import BackupWallet from '../wallet/backup/index';
 import Footer from '../layouts/Footer';
-import Transfer from '../transfer';
+import Header from '../layouts/Header';
 import Main from './main';
-import Settings from '../settings';
 import NetworkSettings from '../settings/network';
+import Settings from '../settings';
+import Transfer from '../transfer';
 
 function App() {
 	return (
@@ -14,9 +15,10 @@ function App() {
 			<Header />
 			<Switch>
 				<Route exact path="/" component={Main} />
-				<Route exact path="/transfer" component={Transfer} />
-				<Route exact path="/settings" component={Settings} />
+				<Route exact path="/backup" component={BackupWallet} />
 				<Route exact path="/networks" component={NetworkSettings} />
+				<Route exact path="/settings" component={Settings} />
+				<Route exact path="/transfer" component={Transfer} />
 			</Switch>
 			<Footer />
 		</>

@@ -42,11 +42,11 @@ export default function Profile() {
 								</div>
 							</li>
 							<li>
-								<a href="/backup" className="item">
+								<Link to="/backup" className="item">
 									<div className="in">
 										<div>Backup Wallet</div>
 									</div>
-								</a>
+								</Link>
 							</li>
 							<li>
 								<Link to="/networks" className="item">
