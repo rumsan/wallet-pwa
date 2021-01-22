@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 export default function Info({ togglePasscodeModal }) {
 	return (
@@ -38,9 +39,11 @@ export default function Info({ togglePasscodeModal }) {
 					delete it or any contents within it.
 				</div>
 				<div className="text-center mt-3">
-					<button className="btn btn-danger btn-lg" id="btnDrive">
-						Backup to Google Drive
-					</button>
+					<Link to="/google">
+						<button className="btn btn-danger btn-lg" id="btnDrive">
+							Backup to Google Drive
+						</button>
+					</Link>
 				</div>
 			</div>
 			<div className="section full mb-2" id="cmpBackup"></div>
