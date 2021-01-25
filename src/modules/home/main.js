@@ -1,5 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import Swal from 'sweetalert2';
+import { useHistory } from 'react-router-dom';
 
 import ModalWrapper from '../global/ModalWrapper';
 import Loading from '../global/Loading';
@@ -14,6 +15,7 @@ const { PASSCODE_LENGTH } = APP_CONSTANTS;
 
 export default function Main() {
 	const { lockScreen, address, lockAppScreen, saveAppKeys } = useContext(AppContext);
+	let history = useHistory();
 
 	const [showWalletActions, setShowWalletActions] = useState(false);
 	const [showModal, setShowModal] = useState({
@@ -26,6 +28,7 @@ export default function Main() {
 	const [loadingModal, setLoadingModal] = useState(false);
 	const [currentPublicKey, setCurrentPublicKey] = useState('');
 	const [mnemonic, setMnemonic] = useState('');
+	const [loadingMessage, setLoadingMessage] = useState('Creating your new wallet. Please wait...');
 
 	const fetchWallet = () => {
 		const existingWallet = getEncryptedWallet();
@@ -47,6 +50,7 @@ export default function Main() {
 			setShowModal({ passcodeModal: true, restoreModal: false });
 		} else if (modalName === 'restoreModal') {
 			setShowModal({ passcodeModal: false, restoreModal: true });
+			setLoadingMessage('Restoring your wallet. Please wait...');
 		}
 	};
 
@@ -89,6 +93,7 @@ export default function Main() {
 			}
 		} catch (err) {
 			Swal.fire('ERROR', err.error.message, 'error');
+			setLoadingModal(false);
 		}
 	};
 
@@ -98,7 +103,7 @@ export default function Main() {
 			toggleModal();
 			setLoadingModal(true);
 			const w = new Wallet({ passcode });
-			const res = await w.create();
+			const res = await w.create(mnemonic);
 			if (res) {
 				const { privateKey, address } = res;
 				savePublickey(address);
@@ -107,11 +112,17 @@ export default function Main() {
 				toggleModal();
 			}
 		} catch (err) {
-			Swal.fire('ERROR', err.error.message, 'error');
+			setLoadingModal(false);
+			Swal.fire('ERROR', err.message, 'error');
 		}
 	};
 
 	const handleMnemonicChange = e => setMnemonic(e.target.value);
+
+	const handleGoogleRestoreClick = e => {
+		e.preventDefault();
+		history.push('/google/restore');
+	};
 
 	return (
 		<div id="appCapsule">
@@ -200,6 +211,7 @@ export default function Main() {
 							/>
 							Create New Wallet
 						</button>
+						<hr />
 						<button
 							onClick={() => toggleModal('restoreModal')}
 							id="btnRestoreWallet"
@@ -211,12 +223,21 @@ export default function Main() {
 								className="md hydrated"
 								aria-label="Restore Existing Wallet"
 							/>
-							Restore Existing Wallet
+							Restore Using Mnemonic
+						</button>
+						<button
+							onClick={handleGoogleRestoreClick}
+							id="btnRestoreUsingGoogle"
+							type="button"
+							className="btn btn-block btn-success"
+						>
+							<ion-icon name="logo-google" className="md hydrated" aria-label="Restore Using Google" />
+							Restore Using Google
 						</button>
 					</div>
 				)}
 			</ModalWrapper>
-			<Loading message="Creating your new wallet. Please wait..." showModal={loadingModal} />
+			<Loading message={loadingMessage} showModal={loadingModal} />
 			<div id="cmpCreateWallet">
 				<div className="header-large-title">
 					<h1 className="title">Rumsan Wallet</h1>

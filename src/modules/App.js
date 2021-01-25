@@ -3,7 +3,8 @@ import { BrowserRouter, Switch, Route } from 'react-router-dom';
 
 import Home from '../modules/home';
 import UnlockWallet from '../modules/wallet/unlock';
-import GoogleRedirect from '../modules/misc/google';
+import GoogleBackup from '../modules/misc/googleBackup';
+import GoogleRestore from '../modules/misc/googleRestore';
 
 import { AppContextProvider } from '../contexts/AppContext';
 
@@ -13,8 +14,9 @@ function App() {
 			<AppContextProvider>
 				<BrowserRouter>
 					<Switch>
-						<Route path="/unlock" component={UnlockWallet} />
-						<Route path="/google" component={GoogleRedirect} />
+						<Route exact path="/unlock" component={UnlockWallet} />
+						<Route exact path="/google/backup" component={GoogleBackup} />
+						<Route exact path="/google/restore" component={GoogleRestore} />
 						<Route path="/" component={Home} />
 					</Switch>
 				</BrowserRouter>
