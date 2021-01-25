@@ -74,7 +74,7 @@ export default function GoogleBackup() {
 				discoveryDocs: DISCOVERY_DOCS,
 				ux_mode: 'redirect',
 				scope: 'profile email https://www.googleapis.com/auth/drive',
-				redirect_uri: GOOGLE_REDIRECT_URL
+				redirect_uri: `${GOOGLE_REDIRECT_URL}/backup`
 			})
 			.then(
 				function () {

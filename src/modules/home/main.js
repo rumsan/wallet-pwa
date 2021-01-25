@@ -265,6 +265,7 @@ export default function Main() {
 						</div>
 					)}
 				</div>
+				<div className="text-center">{lockScreen && <strong>Tap on lock icon to unlock</strong>}</div>
 			</div>
 		</div>
 	);

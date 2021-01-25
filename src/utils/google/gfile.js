@@ -195,14 +195,14 @@ export default class {
 					pageSize: 1,
 					q
 				})
-				.then(response =>
+				.then(response => {
 					resolve({
 						files: response.result.files,
 						incompleteSearch: response.result.incompleteSearch,
 						firstFile: response.result.files.length > 0 ? response.result.files[0] : null,
 						exists: response.result.files.length > 0
-					})
-				);
+					});
+				});
 		});
 	}
 }
