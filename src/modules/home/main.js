@@ -25,6 +25,7 @@ export default function Main() {
 	const [passCodeMatch, setPasscodeMatch] = useState(true);
 	const [loadingModal, setLoadingModal] = useState(false);
 	const [currentPublicKey, setCurrentPublicKey] = useState('');
+	const [mnemonic, setMnemonic] = useState('');
 
 	const fetchWallet = () => {
 		const existingWallet = getEncryptedWallet();
@@ -70,6 +71,7 @@ export default function Main() {
 		setConfirmPasscode('');
 		setPasscode(true);
 		setLoadingModal(false);
+		setMnemonic('');
 	};
 
 	const handleWalletCreate = async () => {
@@ -90,7 +92,26 @@ export default function Main() {
 		}
 	};
 
-	const handleSubmit = () => {};
+	const handleMnemonicSubmit = async () => {
+		if (!mnemonic) return Swal.fire('ERROR', 'Please enter 12 word mnemonic', 'error');
+		try {
+			toggleModal();
+			setLoadingModal(true);
+			const w = new Wallet({ passcode });
+			const res = await w.create();
+			if (res) {
+				const { privateKey, address } = res;
+				savePublickey(address);
+				saveAppKeys({ privateKey, address });
+				resetFormStates();
+				toggleModal();
+			}
+		} catch (err) {
+			Swal.fire('ERROR', err.error.message, 'error');
+		}
+	};
+
+	const handleMnemonicChange = e => setMnemonic(e.target.value);
 
 	return (
 		<div id="appCapsule">
@@ -98,7 +119,9 @@ export default function Main() {
 				title="Restore your wallet"
 				showModal={showModal.restoreModal}
 				handleModal={toggleModal}
-				handleSubmit={handleSubmit}
+				handleSubmit={handleMnemonicSubmit}
+				showFooter={true}
+				btnText="Restore Wallet"
 			>
 				<div className="row">
 					<div className="col">
@@ -107,7 +130,9 @@ export default function Main() {
 							type="text"
 							style={{ width: '100%', borderColor: 'gray', height: 84 }}
 							name="mnemonic"
-							defaultValue={''}
+							value={mnemonic}
+							onChange={handleMnemonicChange}
+							required
 						/>
 					</div>
 				</div>
@@ -198,10 +223,11 @@ export default function Main() {
 					<h4 className="subtitle">Welcome Buddy,</h4>
 				</div>
 				<div className="section mt-2 mb-5" id="cmpInfo">
-					{currentPublicKey ? (
+					{/* address triggers wallet created in real time */}
+					{currentPublicKey || address ? (
 						<div className="card">
 							<div className="pl-4 pt-3 pr-4 text-center">
-								<QRScanner publicKey={currentPublicKey} />
+								<QRScanner publicKey={currentPublicKey || address} />
 							</div>
 						</div>
 					) : (

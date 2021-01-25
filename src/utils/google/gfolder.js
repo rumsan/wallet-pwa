@@ -31,7 +31,6 @@ export default class {
 	}
 
 	getByName(name) {
-		console.log('THIS==>', this.gapi.client);
 		return new Promise((resolve, reject) => {
 			this.gapi.client.drive.files
 				.list({
@@ -51,7 +50,6 @@ export default class {
 
 	async ensureExists(name, options) {
 		let { firstFile } = await this.getByName(name);
-		console.log('First==>', firstFile);
 		if (firstFile) return { id: firstFile.id, name: firstFile.name };
 		return this.create(name, options);
 	}

@@ -7,7 +7,7 @@ import { getCurrentNetwork } from '../../utils/sessionManager';
 import { getNetworkByName } from '../../constants/networks';
 
 export default function Index({ publicKey }) {
-	const [balance, setBalance] = useState('');
+	const [balance, setBalance] = useState(0);
 	const [blockchainNetwork, setBlockchainNetwork] = useState(null);
 	const { lockScreen } = useContext(AppContext);
 
@@ -37,7 +37,7 @@ export default function Index({ publicKey }) {
 	useEffect(fetchMyBalance, []);
 
 	const [inputRef] = useQRCode({
-		text: `${publicKey ? publicKey : 'No address linked.'}`,
+		text: `${publicKey ? publicKey : ''}`,
 		options: {
 			level: 'M',
 			margin: 7,
@@ -70,7 +70,7 @@ export default function Index({ publicKey }) {
 							</div>
 							<div className="col">
 								<h3 className="card-text text-right">
-									Balance: {balance ? balance : 'Fetching...'} <span className="infoBalance" />
+									Balance: <span className="infoBalance">{balance}</span>
 								</h3>
 							</div>
 						</div>
