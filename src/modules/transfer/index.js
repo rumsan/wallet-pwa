@@ -2,18 +2,50 @@ import React, { useContext, useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import { useHistory } from 'react-router-dom';
 import { ethers } from 'ethers';
+import QrReader from 'react-qr-reader';
+
 import { AppContext } from '../../contexts/AppContext';
 import Wallet from '../../utils/blockchain/wallet';
 import Loading from '../global/Loading';
 import AppHeader from '../layouts/AppHeader';
+import ModalWrapper from '../global/ModalWrapper';
+import { APP_CONSTANTS } from '../../constants';
+
+const previewStyle = {
+	height: 300,
+	width: 400,
+	display: 'flex',
+	justifyContent: 'center'
+};
+const camStyle = {
+	display: 'flex',
+	justifyContent: 'center',
+	marginTop: '-50px',
+	padding: '50px',
+	marginBottom: '25px'
+};
+const { SCAN_DELAY } = APP_CONSTANTS;
 
 export default function Index() {
-	const { privateKey, scannedEthAddress } = useContext(AppContext);
+	const { privateKey, saveScannedAddress, scannedEthAddress } = useContext(AppContext);
 	let history = useHistory();
 
 	const [sendAmount, setSendAmount] = useState('');
 	const [sendToAddress, setSendToAddress] = useState('');
 	const [loadingModal, setLoadingModal] = useState(false);
+	const [scanModal, setScanModal] = useState(false);
+
+	const handleScanModalToggle = () => setScanModal(!scanModal);
+
+	const handleScanError = err => {
+		alert('Oops, scanning failed. Please try again');
+	};
+	const handlScanSuccess = data => {
+		if (data) {
+			saveScannedAddress(data);
+			handleScanModalToggle();
+		}
+	};
 
 	const handleSendToChange = e => {
 		setSendToAddress(e.target.value);
@@ -103,6 +135,16 @@ export default function Index() {
 
 	return (
 		<>
+			<ModalWrapper title="Scan a QR Code" showModal={scanModal} handleModal={handleScanModalToggle}>
+				<div style={camStyle}>
+					<QrReader
+						delay={SCAN_DELAY}
+						style={previewStyle}
+						onError={handleScanError}
+						onScan={handlScanSuccess}
+					/>
+				</div>
+			</ModalWrapper>
 			<Loading showModal={loadingModal} message="Transferring tokens. Please wait..." />
 			<AppHeader currentMenu="Transfer" />
 
@@ -138,6 +180,7 @@ export default function Index() {
 												<button
 													type="button"
 													className="btn btn-icon btn-primary mr-1 mb-1 btn-scan-address"
+													onClick={handleScanModalToggle}
 												>
 													<ion-icon name="qr-code-outline" />
 												</button>

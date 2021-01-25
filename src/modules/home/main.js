@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
+import Swal from 'sweetalert2';
 
 import ModalWrapper from '../global/ModalWrapper';
 import Loading from '../global/Loading';
@@ -14,7 +15,7 @@ const { PASSCODE_LENGTH } = APP_CONSTANTS;
 export default function Main() {
 	const { lockScreen, address, lockAppScreen, saveAppKeys } = useContext(AppContext);
 
-	const [showWallet, setShowWallet] = useState(false);
+	const [showWalletActions, setShowWalletActions] = useState(false);
 	const [showModal, setShowModal] = useState({
 		passcodeModal: false,
 		restoreModal: false
@@ -23,12 +24,12 @@ export default function Main() {
 	const [confirmPasscode, setConfirmPasscode] = useState('');
 	const [passCodeMatch, setPasscodeMatch] = useState(true);
 	const [loadingModal, setLoadingModal] = useState(false);
-	const [publicKey, setPublicKey] = useState('');
+	const [currentPublicKey, setCurrentPublicKey] = useState('');
 
 	const fetchWallet = () => {
 		const existingWallet = getEncryptedWallet();
 		const publicKey = getPublicKey(); // Check from localstorage
-		setPublicKey(publicKey);
+		setCurrentPublicKey(publicKey);
 		if (existingWallet && !address) {
 			lockAppScreen();
 		}
@@ -57,11 +58,11 @@ export default function Main() {
 		setConfirmPasscode(value);
 		if (value.length === PASSCODE_LENGTH) {
 			if (value === passcode) {
-				setShowWallet(true);
+				setShowWalletActions(true);
 			} else setPasscodeMatch(false);
 			return;
 		}
-		setShowWallet(false);
+		setShowWalletActions(false);
 	};
 
 	const resetFormStates = () => {
@@ -85,7 +86,7 @@ export default function Main() {
 				toggleModal();
 			}
 		} catch (err) {
-			console.log('ERR=>', err);
+			Swal.fire('ERROR', err.error.message, 'error');
 		}
 	};
 
@@ -159,7 +160,7 @@ export default function Main() {
 						)}
 					</div>
 				</div>
-				{showWallet && (
+				{showWalletActions && (
 					<div>
 						<button
 							onClick={handleWalletCreate}
@@ -197,28 +198,23 @@ export default function Main() {
 					<h4 className="subtitle">Welcome Buddy,</h4>
 				</div>
 				<div className="section mt-2 mb-5" id="cmpInfo">
-					{address || publicKey ? (
+					{currentPublicKey ? (
 						<div className="card">
 							<div className="pl-4 pt-3 pr-4 text-center">
-								<QRScanner publicKey={address} />
+								<QRScanner publicKey={currentPublicKey} />
 							</div>
 						</div>
 					) : (
 						<div className="card mt-5">
 							<div className="card-header">
-								{lockScreen ? (
-									<h4 className="text-center">
-										<ion-icon name="lock-closed" /> Unlock your screen by tapping on lock icon at
-										bottom of screen.
-									</h4>
-								) : (
+								{!lockScreen && (
 									<h4>
 										Let's setup your wallet. You can either create a new wallet or restore existing
 										wallet. Let's begin.
 									</h4>
 								)}
 							</div>
-							{!lockScreen && !address && <SetupButton toggleModal={toggleModal} />}
+							{!lockScreen && !currentPublicKey && <SetupButton toggleModal={toggleModal} />}
 						</div>
 					)}
 				</div>

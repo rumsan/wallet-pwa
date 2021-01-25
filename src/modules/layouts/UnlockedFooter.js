@@ -3,6 +3,7 @@ import { Link, useHistory } from 'react-router-dom';
 import QrReader from 'react-qr-reader';
 import ModalWrapper from '../global/ModalWrapper';
 import { AppContext } from '../../contexts/AppContext';
+import { APP_CONSTANTS } from '../../constants';
 
 const previewStyle = {
 	height: 300,
@@ -17,7 +18,7 @@ const camStyle = {
 	padding: '50px',
 	marginBottom: '25px'
 };
-const SCAN_DELAY = 600;
+const { SCAN_DELAY } = APP_CONSTANTS;
 
 export default function UnlockedFooter() {
 	let history = useHistory();

@@ -42,7 +42,7 @@ export default function Index({ publicKey }) {
 			level: 'M',
 			margin: 7,
 			scale: 1,
-			width: 300
+			width: 260
 		}
 	});
 
@@ -58,29 +58,24 @@ export default function Index({ publicKey }) {
 						Scan the QR Code or use the address to receive tokens to your account.
 					</small>
 				</div>
-				<div className="card-footer">
-					<div className="row">
-						<div className="col">
-							<small>
-								<span className="infoNetwork" style={{ fontStyle: 'italic' }}>
-									{blockchainNetwork && blockchainNetwork.display}
-								</span>
-							</small>
-						</div>
-						<div className="col">
-							{!lockScreen ? (
+				{!lockScreen && (
+					<div className="card-footer">
+						<div className="row">
+							<div className="col">
+								<small>
+									<span className="infoNetwork" style={{ fontStyle: 'italic' }}>
+										{blockchainNetwork && blockchainNetwork.display}
+									</span>
+								</small>
+							</div>
+							<div className="col">
 								<h3 className="card-text text-right">
 									Balance: {balance ? balance : 'Fetching...'} <span className="infoBalance" />
 								</h3>
-							) : (
-								<span style={{ fontSize: 12 }}>
-									<ion-icon name="lock-open-outline" /> Unlock your screen by tapping at lock icon
-									below.
-								</span>
-							)}
+							</div>
 						</div>
 					</div>
-				</div>
+				)}
 			</div>
 		</div>
 	);

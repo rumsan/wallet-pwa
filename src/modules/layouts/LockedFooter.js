@@ -18,7 +18,13 @@ export default function LockedFooter() {
 					<a href="#target" className="item">
 						<div className="col"></div>
 					</a>
-					<a href="#screen" className="item" id="btnUnlock" onClick={handleUnlockClick}>
+					<a
+						title="Tap here to unlock"
+						href="#screen"
+						className="item"
+						id="btnUnlock"
+						onClick={handleUnlockClick}
+					>
 						<div className="col">
 							<div className="action-button large">
 								<ion-icon name="lock-closed" />
