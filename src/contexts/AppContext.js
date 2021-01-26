@@ -7,16 +7,19 @@ import { saveCurrentNetwork } from '../utils/sessionManager';
 const initialState = {
 	privateKey: null,
 	address: null, // Public Key
+	wallet: null,
 	lockScreen: false,
-	scannedEthAddress: ''
+	scannedEthAddress: '',
+	phrases: [],
+	encryptedWallet: ''
 };
 
 export const AppContext = createContext(initialState);
 export const AppContextProvider = ({ children }) => {
 	const [state, dispatch] = useReducer(appReduce, initialState);
 
-	function saveAppKeys(keys) {
-		dispatch({ type: APP_ACTIONS.SET_WALLET_KEYS, data: keys });
+	function saveAppWallet(wallet) {
+		dispatch({ type: APP_ACTIONS.SET_APP_WALLET, data: wallet });
 	}
 
 	function lockAppScreen() {
@@ -44,15 +47,18 @@ export const AppContextProvider = ({ children }) => {
 	return (
 		<AppContext.Provider
 			value={{
-				privateKey: state.privateKey,
 				address: state.address,
+				encryptedWallet: state.encryptedWallet,
 				lockScreen: state.lockScreen,
+				phrases: state.phrases,
+				privateKey: state.privateKey,
 				scannedEthAddress: state.scannedEthAddress,
+				wallet: state.wallet,
 				changeCurrentNetwork,
 				saveScannedAddress,
 				unlockAppScreen,
 				lockAppScreen,
-				saveAppKeys,
+				saveAppWallet,
 				dispatch
 			}}
 		>

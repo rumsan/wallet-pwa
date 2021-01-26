@@ -2,12 +2,15 @@ import APP_ACTIONS from '../actions/appActions';
 
 export default (state, action) => {
 	switch (action.type) {
-		case APP_ACTIONS.SET_WALLET_KEYS:
-			const { privateKey, address } = action.data;
+		case APP_ACTIONS.SET_APP_WALLET:
+			const { privateKey, address, wallet, phrases, encryptedWallet } = action.data;
 			return {
 				...state,
-				privateKey: privateKey,
-				address: address
+				privateKey,
+				address,
+				wallet,
+				phrases,
+				encryptedWallet
 			};
 
 		case APP_ACTIONS.SET_SCANNED_ADDRESS:

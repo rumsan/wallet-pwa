@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 
-import { getCurrentNetwork, logout, getEncryptedWallet, saveEncyptedWallet } from '../sessionManager';
+import { getCurrentNetwork, logout, getEncryptedWallet } from '../sessionManager';
 import { getNetworkByName } from '../../constants/networks';
 
 export default class {
@@ -19,8 +19,7 @@ export default class {
 
 		const { address, privateKey } = wallet;
 		const encryptedWallet = await wallet.encrypt(passcode.toString());
-		saveEncyptedWallet(encryptedWallet);
-		return { privateKey, address, wallet };
+		return { privateKey, address, wallet, encryptedWallet };
 	}
 
 	async loadFromPrivateKey(privateKey) {

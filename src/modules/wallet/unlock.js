@@ -9,7 +9,7 @@ import { APP_CONSTANTS } from '../../constants';
 const { PASSCODE_LENGTH } = APP_CONSTANTS;
 
 export default function Unlock() {
-	const { unlockAppScreen, saveAppKeys } = useContext(AppContext);
+	const { unlockAppScreen, saveAppWallet } = useContext(AppContext);
 	let history = useHistory();
 
 	const [pincode, setPincode] = useState('');
@@ -31,7 +31,7 @@ export default function Unlock() {
 			const data = await w.load(passcode);
 			setLoadingModal(false);
 			unlockAppScreen();
-			saveAppKeys(data);
+			saveAppWallet(data);
 			history.push('/');
 		} catch (e) {
 			setPincode('');

@@ -14,7 +14,7 @@ import { APP_CONSTANTS } from '../../constants';
 const { PASSCODE_LENGTH } = APP_CONSTANTS;
 
 export default function Main() {
-	const { lockScreen, address, lockAppScreen, saveAppKeys } = useContext(AppContext);
+	const { lockScreen, address, lockAppScreen, saveAppWallet } = useContext(AppContext);
 	let history = useHistory();
 
 	const [showWalletActions, setShowWalletActions] = useState(false);
@@ -22,6 +22,7 @@ export default function Main() {
 		passcodeModal: false,
 		restoreModal: false
 	});
+	const [myModal, setMyModal] = useState(false);
 	const [passcode, setPasscode] = useState('');
 	const [confirmPasscode, setConfirmPasscode] = useState('');
 	const [passCodeMatch, setPasscodeMatch] = useState(true);
@@ -33,13 +34,15 @@ export default function Main() {
 	const fetchWallet = () => {
 		const existingWallet = getEncryptedWallet();
 		const publicKey = getPublicKey(); // Check from localstorage
-		setCurrentPublicKey(publicKey);
+		if (publicKey) setCurrentPublicKey(publicKey);
 		if (existingWallet && !address) {
 			lockAppScreen();
 		}
 	};
 
 	useEffect(fetchWallet, []);
+
+	const toggleMyModal = () => setMyModal(!myModal);
 
 	const toggleModal = modalName => {
 		if (!modalName) {
@@ -80,16 +83,16 @@ export default function Main() {
 
 	const handleWalletCreate = async () => {
 		try {
-			toggleModal();
+			toggleMyModal();
 			setLoadingModal(true);
 			const w = new Wallet({ passcode });
 			const res = await w.create();
 			if (res) {
-				const { privateKey, address } = res;
-				savePublickey(address);
-				saveAppKeys({ privateKey, address });
-				resetFormStates();
-				toggleModal();
+				const { privateKey, address, wallet, encryptedWallet } = res;
+				const phrases = await wallet.mnemonic.phrase.split(' ');
+				const payload = { privateKey, address, wallet, phrases, encryptedWallet };
+				saveAppWallet(payload);
+				history.push('/create');
 			}
 		} catch (err) {
 			Swal.fire('ERROR', err.error.message, 'error');
@@ -107,7 +110,7 @@ export default function Main() {
 			if (res) {
 				const { privateKey, address } = res;
 				savePublickey(address);
-				saveAppKeys({ privateKey, address });
+				saveAppWallet({ privateKey, address });
 				resetFormStates();
 				toggleModal();
 			}
@@ -148,11 +151,7 @@ export default function Main() {
 					</div>
 				</div>
 			</ModalWrapper>
-			<ModalWrapper
-				title="First, let's setup your passcode"
-				showModal={showModal.passcodeModal}
-				handleModal={toggleModal}
-			>
+			<ModalWrapper title="First, let's setup your passcode" showModal={myModal} handleModal={toggleMyModal}>
 				<div className="row mb-5">
 					<div className="col">
 						<p>Choose a {PASSCODE_LENGTH}-digit passcode.</p>
@@ -211,29 +210,6 @@ export default function Main() {
 							/>
 							Create New Wallet
 						</button>
-						<hr />
-						<button
-							onClick={() => toggleModal('restoreModal')}
-							id="btnRestoreWallet"
-							type="button"
-							className="btn btn-block btn-bitcoin"
-						>
-							<ion-icon
-								name="wallet-outline"
-								className="md hydrated"
-								aria-label="Restore Existing Wallet"
-							/>
-							Restore Using Mnemonic
-						</button>
-						<button
-							onClick={handleGoogleRestoreClick}
-							id="btnRestoreUsingGoogle"
-							type="button"
-							className="btn btn-block btn-success"
-						>
-							<ion-icon name="logo-google" className="md hydrated" aria-label="Restore Using Google" />
-							Restore Using Google
-						</button>
 					</div>
 				)}
 			</ModalWrapper>
@@ -245,7 +221,7 @@ export default function Main() {
 				</div>
 				<div className="section mt-2 mb-5" id="cmpInfo">
 					{/* address triggers wallet created in real time */}
-					{currentPublicKey || address ? (
+					{currentPublicKey ? (
 						<div className="card">
 							<div className="pl-4 pt-3 pr-4 text-center">
 								<QRScanner publicKey={currentPublicKey || address} />
@@ -261,7 +237,12 @@ export default function Main() {
 									</h4>
 								)}
 							</div>
-							{!lockScreen && !currentPublicKey && <SetupButton toggleModal={toggleModal} />}
+							{!lockScreen && !currentPublicKey && (
+								<SetupButton
+									handleGoogleRestoreClick={handleGoogleRestoreClick}
+									toggleMyModal={toggleMyModal}
+								/>
+							)}
 						</div>
 					)}
 				</div>
