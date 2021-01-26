@@ -8,28 +8,24 @@ import Wallet from '../../utils/blockchain/wallet';
 import QRScanner from '../qr_scanner';
 import SetupButton from './setupButton';
 import { AppContext } from '../../contexts/AppContext';
-import { getPublicKey, savePublickey, getEncryptedWallet } from '../../utils/sessionManager';
+import { getPublicKey, getEncryptedWallet } from '../../utils/sessionManager';
 import { APP_CONSTANTS } from '../../constants';
 
 const { PASSCODE_LENGTH } = APP_CONSTANTS;
 
 export default function Main() {
-	const { lockScreen, address, lockAppScreen, saveAppWallet } = useContext(AppContext);
+	const { saveAppPasscode, lockScreen, address, lockAppScreen, saveAppWallet } = useContext(AppContext);
 	let history = useHistory();
 
 	const [showWalletActions, setShowWalletActions] = useState(false);
-	const [showModal, setShowModal] = useState({
-		passcodeModal: false,
-		restoreModal: false
-	});
-	const [myModal, setMyModal] = useState(false);
+	const [showModal, setShowModal] = useState(false);
 	const [passcode, setPasscode] = useState('');
 	const [confirmPasscode, setConfirmPasscode] = useState('');
 	const [passCodeMatch, setPasscodeMatch] = useState(true);
 	const [loadingModal, setLoadingModal] = useState(false);
 	const [currentPublicKey, setCurrentPublicKey] = useState('');
-	const [mnemonic, setMnemonic] = useState('');
 	const [loadingMessage, setLoadingMessage] = useState('Creating your new wallet. Please wait...');
+	const [currentAction, setCurrentAction] = useState('setup_wallet');
 
 	const fetchWallet = () => {
 		const existingWallet = getEncryptedWallet();
@@ -42,17 +38,15 @@ export default function Main() {
 
 	useEffect(fetchWallet, []);
 
-	const toggleMyModal = () => setMyModal(!myModal);
-
-	const toggleModal = modalName => {
+	const togglePasscodeModal = modalName => {
+		setPasscode('');
 		if (!modalName) {
-			setShowModal({ passcodeModal: false, restoreModal: false });
+			setShowModal(false);
 			return;
 		}
-		if (modalName === 'passcodeModal') {
-			setShowModal({ passcodeModal: true, restoreModal: false });
-		} else if (modalName === 'restoreModal') {
-			setShowModal({ passcodeModal: false, restoreModal: true });
+		setShowModal(!showModal);
+		if (modalName === 'restoreModal') {
+			setCurrentAction('restore_wallet');
 			setLoadingMessage('Restoring your wallet. Please wait...');
 		}
 	};
@@ -65,25 +59,23 @@ export default function Main() {
 		const { value } = e.target;
 		setConfirmPasscode(value);
 		if (value.length === PASSCODE_LENGTH) {
-			if (value === passcode) {
-				setShowWalletActions(true);
-			} else setPasscodeMatch(false);
+			if (value !== passcode) {
+				setPasscodeMatch(false);
+				return;
+			}
+			if (currentAction === 'restore_wallet') {
+				saveAppPasscode(value);
+				history.push('/mnemonic/restore');
+			}
+			if (currentAction === 'setup_wallet') setShowWalletActions(true);
 			return;
 		}
 		setShowWalletActions(false);
 	};
 
-	const resetFormStates = () => {
-		setPasscode('');
-		setConfirmPasscode('');
-		setPasscode(true);
-		setLoadingModal(false);
-		setMnemonic('');
-	};
-
 	const handleWalletCreate = async () => {
 		try {
-			toggleMyModal();
+			togglePasscodeModal();
 			setLoadingModal(true);
 			const w = new Wallet({ passcode });
 			const res = await w.create();
@@ -100,28 +92,6 @@ export default function Main() {
 		}
 	};
 
-	const handleMnemonicSubmit = async () => {
-		if (!mnemonic) return Swal.fire('ERROR', 'Please enter 12 word mnemonic', 'error');
-		try {
-			toggleModal();
-			setLoadingModal(true);
-			const w = new Wallet({ passcode });
-			const res = await w.create(mnemonic);
-			if (res) {
-				const { privateKey, address } = res;
-				savePublickey(address);
-				saveAppWallet({ privateKey, address });
-				resetFormStates();
-				toggleModal();
-			}
-		} catch (err) {
-			setLoadingModal(false);
-			Swal.fire('ERROR', err.message, 'error');
-		}
-	};
-
-	const handleMnemonicChange = e => setMnemonic(e.target.value);
-
 	const handleGoogleRestoreClick = e => {
 		e.preventDefault();
 		history.push('/google/restore');
@@ -130,28 +100,10 @@ export default function Main() {
 	return (
 		<div id="appCapsule">
 			<ModalWrapper
-				title="Restore your wallet"
-				showModal={showModal.restoreModal}
-				handleModal={toggleModal}
-				handleSubmit={handleMnemonicSubmit}
-				showFooter={true}
-				btnText="Restore Wallet"
+				title="First, let's setup your passcode"
+				showModal={showModal}
+				handleModal={togglePasscodeModal}
 			>
-				<div className="row">
-					<div className="col">
-						<p>Please enter your 12 to 24 words mnemonic to restore your wallet.</p>
-						<textarea
-							type="text"
-							style={{ width: '100%', borderColor: 'gray', height: 84 }}
-							name="mnemonic"
-							value={mnemonic}
-							onChange={handleMnemonicChange}
-							required
-						/>
-					</div>
-				</div>
-			</ModalWrapper>
-			<ModalWrapper title="First, let's setup your passcode" showModal={myModal} handleModal={toggleMyModal}>
 				<div className="row mb-5">
 					<div className="col">
 						<p>Choose a {PASSCODE_LENGTH}-digit passcode.</p>
@@ -195,7 +147,7 @@ export default function Main() {
 						)}
 					</div>
 				</div>
-				{showWalletActions && (
+				{showWalletActions && currentAction === 'setup_wallet' && (
 					<div>
 						<button
 							onClick={handleWalletCreate}
@@ -240,7 +192,7 @@ export default function Main() {
 							{!lockScreen && !currentPublicKey && (
 								<SetupButton
 									handleGoogleRestoreClick={handleGoogleRestoreClick}
-									toggleMyModal={toggleMyModal}
+									togglePasscodeModal={togglePasscodeModal}
 								/>
 							)}
 						</div>

@@ -13,6 +13,12 @@ export default (state, action) => {
 				encryptedWallet
 			};
 
+		case APP_ACTIONS.SET_APP_PASSCODE:
+			return {
+				...state,
+				passcode: action.data
+			};
+
 		case APP_ACTIONS.SET_SCANNED_ADDRESS:
 			return {
 				...state,

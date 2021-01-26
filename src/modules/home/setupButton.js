@@ -1,13 +1,13 @@
 import React from 'react';
 
-export default function SetupButton({ handleGoogleRestoreClick, toggleMyModal }) {
+export default function SetupButton({ handleGoogleRestoreClick, togglePasscodeModal }) {
 	return (
 		<>
 			<div className="card-body text-center">
 				<div className="row">
 					<div className="col-md-12 pr-3 pl-3">
 						<button
-							onClick={toggleMyModal}
+							onClick={() => togglePasscodeModal('passcodeModal')}
 							id="btnSetupWallet"
 							type="button"
 							className="btn btn-block btn-linkedin mb-2"
@@ -18,7 +18,12 @@ export default function SetupButton({ handleGoogleRestoreClick, toggleMyModal })
 					</div>
 
 					<div className="col-md-12 pr-3 pl-3">
-						<button id="btnSetupWallet" type="button" className="btn btn-block btn-bitcoin mb-2">
+						<button
+							onClick={() => togglePasscodeModal('restoreModal')}
+							id="btnSetupWallet"
+							type="button"
+							className="btn btn-block btn-bitcoin mb-2"
+						>
 							<ion-icon
 								name="wallet-outline"
 								className="md hydrated"

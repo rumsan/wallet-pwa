@@ -14,9 +14,10 @@ export default function Create() {
 		window.location.replace('/');
 	};
 
-	const confirmBackup = async data => {
+	const confirmBackup = async () => {
 		const isConfirm = await Swal.fire({
-			title: 'Confirmation?',
+			title: 'Success',
+			icon: 'success',
 			html: `Would you like to backup your wallet in Google Drive`,
 			showCancelButton: true,
 			confirmButtonColor: '#3085d6',

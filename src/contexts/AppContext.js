@@ -11,7 +11,8 @@ const initialState = {
 	lockScreen: false,
 	scannedEthAddress: '',
 	phrases: [],
-	encryptedWallet: ''
+	encryptedWallet: '',
+	passcode: '' // To restore from mnemonic
 };
 
 export const AppContext = createContext(initialState);
@@ -44,12 +45,17 @@ export const AppContextProvider = ({ children }) => {
 		saveCurrentNetwork(network);
 	}
 
+	function saveAppPasscode(passcode) {
+		dispatch({ type: APP_ACTIONS.SET_APP_PASSCODE, data: passcode });
+	}
+
 	return (
 		<AppContext.Provider
 			value={{
 				address: state.address,
 				encryptedWallet: state.encryptedWallet,
 				lockScreen: state.lockScreen,
+				passcode: state.passcode,
 				phrases: state.phrases,
 				privateKey: state.privateKey,
 				scannedEthAddress: state.scannedEthAddress,
@@ -59,6 +65,7 @@ export const AppContextProvider = ({ children }) => {
 				unlockAppScreen,
 				lockAppScreen,
 				saveAppWallet,
+				saveAppPasscode,
 				dispatch
 			}}
 		>
