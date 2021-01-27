@@ -19,7 +19,7 @@ const CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 const { PASSCODE_LENGTH } = APP_CONSTANTS;
 
 export default function GoogleRestore() {
-	const { saveAppKeys } = useContext(AppContext);
+	const { saveAppWallet } = useContext(AppContext);
 	const [progressMessage, setProgressMessage] = useState('Restoring wallet from google drive...');
 	const [progressWidth, setProgressWidth] = useState(0);
 	const [loading, setLoading] = useState(false);
@@ -45,8 +45,15 @@ export default function GoogleRestore() {
 		const folder = await gFolder.ensureExists(GDriveFolderName);
 		const file = await gFile.getByName(BackupFileName, folder.id);
 		if (file.exists) {
-			let encryptedWallet = await gFile.downloadFile(file.firstFile.id);
-			setEncryptedWallet(encryptedWallet);
+			let data = await gFile.downloadFile(file.firstFile.id);
+			const jsonData = JSON.parse(data);
+			setEncryptedWallet(jsonData.wallet);
+		} else {
+			setCurrentAction('restore_wallet');
+			setProgressMessage(
+				'No backup found in google drive. Please follow the link below to create fresh new wallet.'
+			);
+			setProgressWidth(100);
 		}
 	};
 
@@ -80,8 +87,11 @@ export default function GoogleRestore() {
 	const verifyPasscodeAndRestore = async passcodeData => {
 		try {
 			setLoading(true);
-			const data = await ethers.Wallet.fromEncryptedJson(encryptedWallet, passcodeData.toString());
-			saveEncyptedWallet(encryptedWallet);
+			const data = await ethers.Wallet.fromEncryptedJson(
+				JSON.stringify(encryptedWallet),
+				passcodeData.toString()
+			);
+			saveEncyptedWallet(JSON.stringify(encryptedWallet));
 			setLoading(false);
 			setCurrentAction('restore_wallet');
 			setProgressWidth(25);
@@ -89,7 +99,7 @@ export default function GoogleRestore() {
 			const { privateKey, address } = data;
 			setProgressWidth(50);
 			savePublickey(address);
-			saveAppKeys({ privateKey, address });
+			saveAppWallet({ privateKey, address });
 			setProgressMessage('Wallet restored successfully.');
 			setProgressWidth(100);
 			setPasscode('');
@@ -134,7 +144,9 @@ export default function GoogleRestore() {
 					</div>
 				</div>
 			) : (
-				<div className="text-center">{!encryptedWallet && 'Initializing google restore...'}</div>
+				<div className="text-center">
+					{!encryptedWallet && progressWidth < 10 && 'Initializing google restore...'}
+				</div>
 			)}
 
 			<div id="cmpMain">

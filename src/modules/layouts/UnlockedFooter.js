@@ -54,7 +54,7 @@ export default function UnlockedFooter() {
 					<a href="#home" className="item">
 						<div className="col">
 							<ion-icon name="briefcase-outline" />
-							<strong>Vault</strong>
+							<strong>Assets</strong>
 						</div>
 					</a>
 					<Link to="/transfer" className="item">

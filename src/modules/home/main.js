@@ -38,8 +38,13 @@ export default function Main() {
 
 	useEffect(fetchWallet, []);
 
-	const togglePasscodeModal = modalName => {
+	const resetPasscodes = () => {
 		setPasscode('');
+		setConfirmPasscode('');
+	};
+
+	const togglePasscodeModal = modalName => {
+		resetPasscodes();
 		if (!modalName) {
 			setShowModal(false);
 			return;
