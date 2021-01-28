@@ -51,12 +51,12 @@ export default function UnlockedFooter() {
 			</ModalWrapper>
 			<div className="footer-unlocked">
 				<div className="appBottomMenu">
-					<a href="#home" className="item">
+					<Link to="/tokens" className="item">
 						<div className="col">
 							<ion-icon name="briefcase-outline" />
 							<strong>Assets</strong>
 						</div>
-					</a>
+					</Link>
 					<Link to="/transfer" className="item">
 						<div className="col">
 							<ion-icon name="paper-plane-outline" />

@@ -8,6 +8,7 @@ import Main from './main';
 import NetworkSettings from '../settings/network';
 import Settings from '../settings';
 import Transfer from '../transfer';
+import Tokens from '../tokens';
 
 function App() {
 	return (
@@ -15,6 +16,7 @@ function App() {
 			<Header />
 			<Switch>
 				<Route exact path="/" component={Main} />
+				<Route exact path="/tokens" component={Tokens} />
 				<Route exact path="/backup" component={BackupWallet} />
 				<Route exact path="/networks" component={NetworkSettings} />
 				<Route exact path="/settings" component={Settings} />

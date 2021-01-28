@@ -1,3 +1,14 @@
+export function saveTokenAssets(data) {
+	localStorage.setItem('tokenAssests', JSON.stringify(data));
+}
+
+export function getTokenAssests() {
+	if (localStorage.getItem('tokenAssests') && Object.keys(localStorage.getItem('tokenAssests')).length) {
+		return JSON.parse(localStorage.getItem('tokenAssests'));
+	}
+	return null;
+}
+
 export function getEncryptedWallet() {
 	if (localStorage.getItem('wallet') && Object.keys(localStorage.getItem('wallet')).length) {
 		return JSON.parse(localStorage.getItem('wallet'));
