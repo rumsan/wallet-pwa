@@ -2,7 +2,7 @@ import React, { useContext, useEffect } from 'react';
 import { AppContext } from '../../contexts/AppContext';
 import LockedFooter from './LockedFooter';
 import UnlockedFooter from './UnlockedFooter';
-import { getEncryptedWallet, getTokenAssests } from '../../utils/sessionManager';
+import { getEncryptedWallet, getTokenAssets } from '../../utils/sessionManager';
 
 const wallet = getEncryptedWallet();
 
@@ -11,7 +11,7 @@ export default function Footer() {
 	const myWallet = wallet ? wallet : address;
 
 	const fetchTokenAssets = () => {
-		const tokens = getTokenAssests() || [];
+		const tokens = getTokenAssets() || [];
 		saveTokens(tokens);
 	};
 

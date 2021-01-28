@@ -11,7 +11,7 @@ import { mergeAndRemoveDuplicate } from '../../utils/index';
 const CONTRACT_NAME = 'rumsan';
 
 export default function Index() {
-	const { address, saveTokens, tokenAssests } = useContext(AppContext);
+	const { address, saveTokens, tokenAssets } = useContext(AppContext);
 
 	const [contractAddress, setContractAddress] = useState('');
 	const [tokenSymbol, setTokenSymbol] = useState('');
@@ -53,7 +53,7 @@ export default function Index() {
 	};
 
 	const handleClickAddToken = () => {
-		let existing = tokenAssests || [];
+		let existing = tokenAssets || [];
 		let newData = [];
 		const data = {
 			contract: contractAddress,
@@ -73,13 +73,13 @@ export default function Index() {
 			<Loading showModal={loading} message="Fetching token details. Please wait.." />
 			<AppHeader currentMenu="Assets" />
 			<div className="section full mt-2">
-				<div className="section-title">Your Assests:</div>
+				<div className="section-title">Your Assets:</div>
 				<div className="content-header mb-05">You can import your assets using token contract address.</div>
 			</div>
 			<div className="card-body">
 				<ul className="list-group">
-					{tokenAssests.length > 0 ? (
-						tokenAssests.map(token => {
+					{tokenAssets.length > 0 ? (
+						tokenAssets.map(token => {
 							return (
 								<li key={token.symbol} className="list-group-item">
 									<ion-icon name="card-outline" />

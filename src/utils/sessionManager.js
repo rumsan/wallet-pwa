@@ -1,10 +1,10 @@
 export function saveTokenAssets(data) {
-	localStorage.setItem('tokenAssests', JSON.stringify(data));
+	localStorage.setItem('tokenAssets', JSON.stringify(data));
 }
 
-export function getTokenAssests() {
-	if (localStorage.getItem('tokenAssests') && Object.keys(localStorage.getItem('tokenAssests')).length) {
-		return JSON.parse(localStorage.getItem('tokenAssests'));
+export function getTokenAssets() {
+	if (localStorage.getItem('tokenAssets') && Object.keys(localStorage.getItem('tokenAssets')).length) {
+		return JSON.parse(localStorage.getItem('tokenAssets'));
 	}
 	return null;
 }
