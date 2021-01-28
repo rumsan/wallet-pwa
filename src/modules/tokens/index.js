@@ -1,16 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import Swal from 'sweetalert2';
 
 import AppHeader from '../layouts/AppHeader';
-import { getAbi, ethersContract } from '../../utils/blockchain/abi';
 import Loading from '../global/Loading';
+import { AppContext } from '../../contexts/AppContext';
+
+import { getAbi, ethersContract } from '../../utils/blockchain/abi';
+import { mergeAndRemoveDuplicate } from '../../utils/index';
 
 const CONTRACT_NAME = 'rumsan';
 
 export default function Index() {
+	const { address, saveTokens, tokenAssests } = useContext(AppContext);
+
 	const [contractAddress, setContractAddress] = useState('');
 	const [tokenSymbol, setTokenSymbol] = useState('');
 	const [decimalsPrecision, setDecimalsPrecision] = useState('');
+	const [tokenBalance, setTokenBalance] = useState(0);
 	const [loading, setLoading] = useState(false);
 
 	const changeInputContractAddress = async e => {
@@ -32,9 +38,10 @@ export default function Index() {
 			setLoading(true);
 			let tokenAbi = await getAbi(CONTRACT_NAME);
 			let TokenContract = await ethersContract(tokenAbi, contractAddress);
-			//	let tokenBalance = await TokenContract.balanceOf(ACCOUNT_ADDRESS);
 			let symbol = await TokenContract.symbol();
 			let decimals = await TokenContract.decimals();
+			let balance = await TokenContract.balanceOf(address);
+			setTokenBalance(balance.toNumber());
 			setTokenSymbol(symbol);
 			setDecimalsPrecision(decimals);
 			setLoading(false);
@@ -43,6 +50,22 @@ export default function Index() {
 			setLoading(false);
 			Swal.fire('ERROR', err.message, 'error');
 		}
+	};
+
+	const handleClickAddToken = () => {
+		let existing = tokenAssests || [];
+		let newData = [];
+		const data = {
+			contract: contractAddress,
+			symbol: tokenSymbol,
+			decimal: decimalsPrecision,
+			tokenBalance: tokenBalance
+		};
+		newData.push(data);
+		const merged = mergeAndRemoveDuplicate(existing, newData, 'symbol');
+		saveTokens(merged);
+		Swal.fire('Success', 'Token added successfully.', 'success');
+		resetFormFields();
 	};
 
 	return (
@@ -55,14 +78,26 @@ export default function Index() {
 			</div>
 			<div className="card-body">
 				<ul className="list-group">
-					<li className="list-group-item">
-						<ion-icon name="card-outline" />
-						&nbsp; <span style={{ verticalAlign: 'text-bottom' }}>100 ETH</span>
-					</li>
-					<li className="list-group-item">
-						<ion-icon name="card-outline" />
-						&nbsp; <span style={{ verticalAlign: 'text-bottom' }}>500 LTC</span>
-					</li>
+					{tokenAssests.length > 0 ? (
+						tokenAssests.map(token => {
+							return (
+								<li key={token.symbol} className="list-group-item">
+									<ion-icon name="card-outline" />
+									&nbsp;{' '}
+									<span style={{ verticalAlign: 'text-bottom' }}>
+										{token.tokenBalance} {token.symbol}
+									</span>
+								</li>
+							);
+						})
+					) : (
+						<div>
+							<ion-icon name="information-circle-outline"></ion-icon>{' '}
+							<span style={{ verticalAlign: 'text-bottom' }}>
+								<small>Your assets will appear here.</small>
+							</span>
+						</div>
+					)}
 				</ul>
 			</div>
 			<hr />
@@ -148,7 +183,12 @@ export default function Index() {
 						</div>
 						{contractAddress && tokenSymbol && decimalsPrecision && (
 							<div className="card-footer text-right">
-								<button type="button" id="btnAddToken" className="btn btn-success">
+								<button
+									type="button"
+									id="btnAddToken"
+									onClick={handleClickAddToken}
+									className="btn btn-success"
+								>
 									<ion-icon name="send-outline" /> Add Token
 								</button>
 							</div>

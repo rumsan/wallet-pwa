@@ -1,8 +1,8 @@
 import { ethers } from 'ethers';
 import { getCurrentNetwork } from '../sessionManager';
+const NETWORK_URL = getCurrentNetwork();
 
-// TODO get current network
-const NETWORK_URL = 'https://testnetwork.esatya.io';
+//const TEST_NETWORK = 'https://testnetwork.esatya.io';
 
 export const getAbi = contractName => {
 	const contractJson = require(`./build/${contractName}`);

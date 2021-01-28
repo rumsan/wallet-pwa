@@ -2,7 +2,7 @@ import React, { createContext, useReducer } from 'react';
 import appReduce from '../reducers/appReducer';
 import APP_ACTIONS from '../actions/appActions';
 import { getNetworkByName } from '../constants/networks';
-import { saveCurrentNetwork } from '../utils/sessionManager';
+import { saveCurrentNetwork, saveTokenAssets } from '../utils/sessionManager';
 
 const initialState = {
 	privateKey: null,
@@ -12,6 +12,7 @@ const initialState = {
 	scannedEthAddress: '',
 	phrases: [],
 	encryptedWallet: '',
+	tokenAssests: [],
 	passcode: '' // To restore from mnemonic
 };
 
@@ -49,6 +50,11 @@ export const AppContextProvider = ({ children }) => {
 		dispatch({ type: APP_ACTIONS.SET_APP_PASSCODE, data: passcode });
 	}
 
+	function saveTokens(tokens) {
+		saveTokenAssets(tokens);
+		dispatch({ type: APP_ACTIONS.SET_TOKEN_ASSESTS, data: tokens });
+	}
+
 	return (
 		<AppContext.Provider
 			value={{
@@ -60,12 +66,14 @@ export const AppContextProvider = ({ children }) => {
 				privateKey: state.privateKey,
 				scannedEthAddress: state.scannedEthAddress,
 				wallet: state.wallet,
+				tokenAssests: state.tokenAssests,
 				changeCurrentNetwork,
 				saveScannedAddress,
 				unlockAppScreen,
 				lockAppScreen,
 				saveAppWallet,
 				saveAppPasscode,
+				saveTokens,
 				dispatch
 			}}
 		>
