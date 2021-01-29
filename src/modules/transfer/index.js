@@ -10,6 +10,15 @@ import Loading from '../global/Loading';
 import AppHeader from '../layouts/AppHeader';
 import ModalWrapper from '../global/ModalWrapper';
 import { APP_CONSTANTS } from '../../constants';
+import { getTokenAssets } from '../../utils/sessionManager';
+import { getAbi, ethersWallet } from '../../utils/blockchain/abi';
+
+const { CONTRACT_NAME } = APP_CONSTANTS;
+const { SCAN_DELAY } = APP_CONSTANTS;
+const DEFAULT_TOKEN = 'ETH';
+const TOKEN_ASSETS = getTokenAssets();
+
+const contractAddress = '0xED5996f00187457E17cB2328207733A6CCFA436E';
 
 const previewStyle = {
 	height: 300,
@@ -24,7 +33,6 @@ const camStyle = {
 	padding: '50px',
 	marginBottom: '25px'
 };
-const { SCAN_DELAY } = APP_CONSTANTS;
 
 export default function Index() {
 	const { privateKey, saveScannedAddress, scannedEthAddress } = useContext(AppContext);
@@ -34,6 +42,7 @@ export default function Index() {
 	const [sendToAddress, setSendToAddress] = useState('');
 	const [loadingModal, setLoadingModal] = useState(false);
 	const [scanModal, setScanModal] = useState(false);
+	const [sendingToken, setSendingToken] = useState(DEFAULT_TOKEN);
 
 	const handleScanModalToggle = () => setScanModal(!scanModal);
 
@@ -83,7 +92,7 @@ export default function Index() {
 	const confirmAndSend = async data => {
 		const isConfirm = await Swal.fire({
 			title: 'Are you sure?',
-			html: `You are sending <b>${data.sendAmount}</b> ethers to <b>${data.sendToAddress}</b>.<br>Please double check the address and the amount.`,
+			html: `You are sending <b>${data.sendAmount} ${sendingToken}</b> to <b>${data.sendToAddress}</b>.<br><small>Please double check the address and the amount.</small>`,
 			showCancelButton: true,
 			confirmButtonColor: '#3085d6',
 			cancelButtonColor: '#d33',
@@ -101,13 +110,8 @@ export default function Index() {
 			setLoadingModal(true);
 			setTimeout(async () => {
 				try {
-					const w = new Wallet({});
-					const wallet = await w.loadFromPrivateKey(privateKey);
-					const receipt = await wallet.sendTransaction({
-						to: data.sendToAddress,
-						value: ethers.utils.parseEther(data.sendAmount.toString())
-					});
-					sendSuccess(data, receipt);
+					if (sendingToken === 'ETH') await sendEther(data);
+					else await sendERCToken();
 				} catch (e) {
 					Swal.fire('ERROR', e.error.message, 'error');
 				} finally {
@@ -119,6 +123,38 @@ export default function Index() {
 		}
 	};
 
+	//TODO verify if it works
+	const sendERCToken = async () => {
+		try {
+			let tokenAbi = await getAbi(CONTRACT_NAME);
+			const senderWallet = await ethersWallet(privateKey);
+			const TokenContract = new ethers.Contract(contractAddress, tokenAbi, senderWallet);
+			console.log('TOKEN Contract==>', TokenContract);
+			const howMuchTokens = ethers.utils.parseUnits(sendAmount, 6);
+			console.log({ howMuchTokens });
+			await TokenContract.transfer(sendToAddress, howMuchTokens);
+			console.log(`Sent ${ethers.utils.formatUnits(howMuchTokens, 6)} TRYB to
+        address ${sendToAddress}
+        `);
+		} catch (err) {
+			Swal.fire('ERROR', err.message, 'error');
+		}
+	};
+
+	const sendEther = async data => {
+		try {
+			const w = new Wallet({});
+			const wallet = await w.loadFromPrivateKey(privateKey);
+			const receipt = await wallet.sendTransaction({
+				to: data.sendToAddress,
+				value: ethers.utils.parseEther(data.sendAmount.toString())
+			});
+			sendSuccess(data, receipt);
+		} catch (err) {
+			Swal.fire('ERROR', err.message, 'error');
+		}
+	};
+
 	const handleSendClick = () => {
 		if (!sendAmount || !sendToAddress) {
 			return Swal.fire({ title: 'ERROR', icon: 'error', text: 'Send amount and receiver address is required' });
@@ -126,9 +162,14 @@ export default function Index() {
 		confirmAndSend({ sendAmount, sendToAddress });
 	};
 
+	const handleChangeTokenSelect = e => {
+		const { value } = e.target;
+		setSendingToken(value);
+	};
+
 	useEffect(() => {
 		if (!privateKey) {
-			history.push('/');
+			//history.push('/');
 		}
 		scannedEthAddress && setSendToAddress(scannedEthAddress);
 	}, [history, privateKey, scannedEthAddress]);
@@ -153,6 +194,32 @@ export default function Index() {
 						<div className="card mt-5" id="cmpTransfer">
 							<div className="card-body">
 								<form>
+									<div className="form-group boxed" style={{ padding: 0 }}>
+										<div className="input-wrapper">
+											<label className="label" htmlFor="sendToAddr">
+												Select Token:
+											</label>
+											<div className="input-group mb-3">
+												<div className="form-group">
+													<select
+														className="form-control"
+														onChange={handleChangeTokenSelect}
+														name="selectToken"
+													>
+														<option value={`${DEFAULT_TOKEN}`}>ETH (Ether)</option>
+														{TOKEN_ASSETS.length > 0 &&
+															TOKEN_ASSETS.map(item => {
+																return (
+																	<option key={item.symbol} value={item.symbol}>
+																		{item.symbol}
+																	</option>
+																);
+															})}
+													</select>
+												</div>
+											</div>
+										</div>
+									</div>
 									<div className="form-group boxed" style={{ padding: 0 }}>
 										<div className="input-wrapper">
 											<label className="label" htmlFor="sendToAddr">

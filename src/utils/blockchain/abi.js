@@ -18,3 +18,9 @@ export const ethersContract = async (abi, contractAddress) => {
 		throw new Error(error);
 	}
 };
+
+export const ethersWallet = private_key => {
+	let provider = new ethers.providers.JsonRpcProvider(NETWORK_URL);
+	const senderWallet = new ethers.Wallet(private_key, provider);
+	return senderWallet;
+};

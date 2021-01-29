@@ -7,8 +7,9 @@ import { AppContext } from '../../contexts/AppContext';
 
 import { getAbi, ethersContract } from '../../utils/blockchain/abi';
 import { mergeAndRemoveDuplicate } from '../../utils/index';
+import { APP_CONSTANTS } from '../../constants';
 
-const CONTRACT_NAME = 'rumsan';
+const { CONTRACT_NAME } = APP_CONSTANTS;
 
 export default function Index() {
 	const { address, saveTokens, tokenAssets } = useContext(AppContext);
