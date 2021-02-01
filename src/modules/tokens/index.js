@@ -182,7 +182,7 @@ export default function Index() {
 								</div>
 							</form>
 						</div>
-						{contractAddress && tokenSymbol && decimalsPrecision && (
+						{contractAddress && tokenSymbol && decimalsPrecision <= 0 && (
 							<div className="card-footer text-right">
 								<button
 									type="button"

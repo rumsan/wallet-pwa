@@ -1,7 +1,7 @@
 const networks = [
 	{
 		name: 'rumsan',
-		url: 'https://rumsannetwork.esatya.io',
+		url: 'https://testnetwork.esatya.io',
 		display: 'Rumsan Network',
 		default: true
 	},

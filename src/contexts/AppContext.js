@@ -51,8 +51,10 @@ export const AppContextProvider = ({ children }) => {
 	}
 
 	function saveTokens(tokens) {
-		saveTokenAssets(tokens);
-		dispatch({ type: APP_ACTIONS.SET_TOKEN_ASSETS, data: tokens });
+		if (tokens.length) {
+			saveTokenAssets(tokens);
+			dispatch({ type: APP_ACTIONS.SET_TOKEN_ASSETS, data: tokens });
+		}
 	}
 
 	return (

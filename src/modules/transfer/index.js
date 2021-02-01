@@ -16,9 +16,6 @@ import { getAbi, ethersWallet } from '../../utils/blockchain/abi';
 const { CONTRACT_NAME } = APP_CONSTANTS;
 const { SCAN_DELAY } = APP_CONSTANTS;
 const DEFAULT_TOKEN = 'ETH';
-const TOKEN_ASSETS = getTokenAssets();
-
-const contractAddress = '0xED5996f00187457E17cB2328207733A6CCFA436E';
 
 const previewStyle = {
 	height: 300,
@@ -37,6 +34,7 @@ const camStyle = {
 export default function Index() {
 	const { privateKey, saveScannedAddress, scannedEthAddress } = useContext(AppContext);
 	let history = useHistory();
+	const TOKEN_ASSETS = getTokenAssets();
 
 	const [sendAmount, setSendAmount] = useState('');
 	const [sendToAddress, setSendToAddress] = useState('');
@@ -67,7 +65,8 @@ export default function Index() {
 	const resetFormStates = () => {
 		setLoadingModal(false);
 		setSendAmount('');
-		setSendAmount('');
+		setSendingToken(DEFAULT_TOKEN);
+		setSendToAddress('');
 	};
 
 	const sendSuccess = (data, receipt) => {
@@ -115,7 +114,7 @@ export default function Index() {
 				} catch (e) {
 					Swal.fire('ERROR', e.error.message, 'error');
 				} finally {
-					setLoadingModal(false);
+					resetFormStates();
 				}
 			}, 250);
 		} catch (e) {
@@ -123,19 +122,25 @@ export default function Index() {
 		}
 	};
 
-	//TODO verify if it works
+	const findContractBySymbol = sendingToken => {
+		let data = null;
+		let myAssets = getTokenAssets();
+		if (myAssets.length) {
+			data = myAssets.filter(item => item.symbol === sendingToken);
+		}
+		return data;
+	};
+
 	const sendERCToken = async () => {
 		try {
+			let contract = findContractBySymbol(sendingToken);
+			if (!contract) throw new Error('Contract not found');
+			const contractAddress = contract[0].contract;
 			let tokenAbi = await getAbi(CONTRACT_NAME);
 			const senderWallet = await ethersWallet(privateKey);
 			const TokenContract = new ethers.Contract(contractAddress, tokenAbi, senderWallet);
-			console.log('TOKEN Contract==>', TokenContract);
-			const howMuchTokens = ethers.utils.parseUnits(sendAmount, 6);
-			console.log({ howMuchTokens });
-			await TokenContract.transfer(sendToAddress, howMuchTokens);
-			console.log(`Sent ${ethers.utils.formatUnits(howMuchTokens, 6)} TRYB to
-        address ${sendToAddress}
-        `);
+			await TokenContract.transfer(sendToAddress, sendAmount);
+			Swal.fire('SUCCESS', `${sendAmount} tokens transfered successfully`, 'success');
 		} catch (err) {
 			Swal.fire('ERROR', err.message, 'error');
 		}
@@ -169,7 +174,7 @@ export default function Index() {
 
 	useEffect(() => {
 		if (!privateKey) {
-			//history.push('/');
+			history.push('/');
 		}
 		scannedEthAddress && setSendToAddress(scannedEthAddress);
 	}, [history, privateKey, scannedEthAddress]);
@@ -207,7 +212,8 @@ export default function Index() {
 														name="selectToken"
 													>
 														<option value={`${DEFAULT_TOKEN}`}>ETH (Ether)</option>
-														{TOKEN_ASSETS.length > 0 &&
+														{TOKEN_ASSETS &&
+															TOKEN_ASSETS.length > 0 &&
 															TOKEN_ASSETS.map(item => {
 																return (
 																	<option key={item.symbol} value={item.symbol}>
@@ -268,7 +274,6 @@ export default function Index() {
 												id="sendAmount"
 												name="sendAmount"
 												placeholder="Enter amount to send"
-												defaultValue
 											/>
 											<i className="clear-input">
 												<ion-icon
