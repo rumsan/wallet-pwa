@@ -12,6 +12,7 @@ import {
 import { APP_CONSTANTS } from '../../constants';
 import { getNetworkByName } from '../../constants/networks';
 import { ethersContract, getAbi } from '../../utils/blockchain/abi';
+import { mergeAndRemoveDuplicate } from '../../utils/index';
 
 const wallet = getEncryptedWallet();
 const tokens = getTokenAssets();
@@ -25,24 +26,31 @@ export default function Footer() {
 		const current = getCurrentNetwork();
 		const network = getNetworkByName();
 		if (!current) saveCurrentNetwork(network);
-		//	saveTokens(tokens);
 	};
 
 	useEffect(() => {
-		(async function anyNameFunction() {
+		(async function fetchMyAssets() {
+			const pubKey = getPublicKey();
+			const publicKey = address ? address : pubKey;
 			refreshCurrentNetwork();
+			let newData = [];
 			if (tokens && tokens.length) {
-				let pubKey = getPublicKey();
-				for (let t of tokens) {
-					let tokenAbi = await getAbi(CONTRACT_NAME);
-					let TokenContract = await ethersContract(tokenAbi, t.contract);
-					let balance = await TokenContract.balanceOf(address ? address : pubKey);
-					let numBalance = balance.toNumber();
-					console.log('Balance==>', numBalance);
-				}
+				try {
+					for (let t of tokens) {
+						let tokenAbi = await getAbi(CONTRACT_NAME);
+						let TokenContract = await ethersContract(tokenAbi, t.contract);
+						let balance = await TokenContract.balanceOf(publicKey);
+						let tokenBalance = balance.toNumber();
+						let symbol = await TokenContract.symbol();
+						let decimal = await TokenContract.decimals();
+						newData.push({ contract: t.contract, tokenBalance, symbol, decimal });
+					}
+					const merged = mergeAndRemoveDuplicate(tokens, newData, 'symbol');
+					saveTokens(merged);
+				} catch (err) {}
 			}
 		})();
-	}, [address]);
+	}, [address, saveTokens]);
 
 	return (
 		<>

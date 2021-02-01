@@ -10,7 +10,6 @@ import Loading from '../global/Loading';
 import AppHeader from '../layouts/AppHeader';
 import ModalWrapper from '../global/ModalWrapper';
 import { APP_CONSTANTS } from '../../constants';
-import { getTokenAssets } from '../../utils/sessionManager';
 import { getAbi, ethersWallet } from '../../utils/blockchain/abi';
 
 const { CONTRACT_NAME } = APP_CONSTANTS;
@@ -32,9 +31,8 @@ const camStyle = {
 };
 
 export default function Index() {
-	const { privateKey, saveScannedAddress, scannedEthAddress } = useContext(AppContext);
+	const { tokenAssets, privateKey, saveScannedAddress, scannedEthAddress } = useContext(AppContext);
 	let history = useHistory();
-	const TOKEN_ASSETS = getTokenAssets();
 
 	const [sendAmount, setSendAmount] = useState('');
 	const [sendToAddress, setSendToAddress] = useState('');
@@ -67,6 +65,21 @@ export default function Index() {
 		setSendAmount('');
 		setSendingToken(DEFAULT_TOKEN);
 		setSendToAddress('');
+	};
+
+	const sendERCSuccess = (sendAmount, sendToAddress) => {
+		Swal.fire({
+			title: 'Success',
+			html: `You sent <b>${sendAmount}</b> ${sendingToken} to <b>${sendToAddress}</b>.`,
+			icon: 'success',
+			confirmButtonColor: '#3085d6',
+			cancelButtonColor: '#d33',
+			confirmButtonText: 'Okay'
+		}).then(result => {
+			if (result.value) {
+				history.push('/tokens');
+			}
+		});
 	};
 
 	const sendSuccess = (data, receipt) => {
@@ -124,9 +137,8 @@ export default function Index() {
 
 	const findContractBySymbol = sendingToken => {
 		let data = null;
-		let myAssets = getTokenAssets();
-		if (myAssets.length) {
-			data = myAssets.filter(item => item.symbol === sendingToken);
+		if (tokenAssets.length) {
+			data = tokenAssets.filter(item => item.symbol === sendingToken);
 		}
 		return data;
 	};
@@ -140,7 +152,7 @@ export default function Index() {
 			const senderWallet = await ethersWallet(privateKey);
 			const TokenContract = new ethers.Contract(contractAddress, tokenAbi, senderWallet);
 			await TokenContract.transfer(sendToAddress, sendAmount);
-			Swal.fire('SUCCESS', `${sendAmount} tokens transfered successfully`, 'success');
+			sendERCSuccess(sendAmount, sendToAddress);
 		} catch (err) {
 			Swal.fire('ERROR', err.message, 'error');
 		}
@@ -212,9 +224,9 @@ export default function Index() {
 														name="selectToken"
 													>
 														<option value={`${DEFAULT_TOKEN}`}>ETH (Ether)</option>
-														{TOKEN_ASSETS &&
-															TOKEN_ASSETS.length > 0 &&
-															TOKEN_ASSETS.map(item => {
+														{tokenAssets &&
+															tokenAssets.length > 0 &&
+															tokenAssets.map(item => {
 																return (
 																	<option key={item.symbol} value={item.symbol}>
 																		{item.symbol}

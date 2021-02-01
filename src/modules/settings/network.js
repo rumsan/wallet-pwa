@@ -1,10 +1,14 @@
 import React, { useContext, useState, useEffect } from 'react';
+import Swal from 'sweetalert2';
+import { useHistory } from 'react-router-dom';
+
 import AppHeader from '../layouts/AppHeader';
 import { NETWORKS } from '../../constants/networks';
 import { AppContext } from '../../contexts/AppContext';
 import Wallet from '../../utils/blockchain/wallet';
 
 export default function Network() {
+	let history = useHistory();
 	const { changeCurrentNetwork } = useContext(AppContext);
 	const [customNetworkUrl, setCustomNetworkUrl] = useState('');
 	const [isCustom, setIsCustom] = useState(false);
@@ -14,7 +18,23 @@ export default function Network() {
 		setCustomNetworkUrl(e.target.value);
 		setTimeout(() => {
 			changeCurrentNetwork('custom', customNetworkUrl);
-		}, 3000);
+			networkChangeSuccess();
+		}, 5000);
+	};
+
+	const networkChangeSuccess = () => {
+		Swal.fire({
+			title: 'Success',
+			html: `Network has been changed successfully`,
+			icon: 'success',
+			confirmButtonColor: '#3085d6',
+			cancelButtonColor: '#d33',
+			confirmButtonText: 'Okay'
+		}).then(result => {
+			if (result.value) {
+				history.push('/');
+			}
+		});
 	};
 
 	const handleNetworkChange = e => {
@@ -26,6 +46,7 @@ export default function Network() {
 		}
 		setIsCustom(false);
 		changeCurrentNetwork(value);
+		networkChangeSuccess();
 	};
 
 	const fetchCurrentNetwork = () => {
@@ -53,7 +74,7 @@ export default function Network() {
 						</div>
 					</div>
 					<div className="section full mb-2" id="cmpNetwork">
-						<div className="section-title">Available Networks</div>
+						<div className="section-title">Available Networks </div>
 						<div className="wide-block p-0">
 							<form autoComplete="off">
 								<div className="input-list">
