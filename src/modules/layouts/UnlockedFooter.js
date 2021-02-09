@@ -70,12 +70,12 @@ export default function UnlockedFooter() {
 							</div>
 						</div>
 					</a>
-					<a href="#home" className="item">
+					<Link to="/vault" className="item">
 						<div className="col">
-							<ion-icon name="receipt-outline" />
-							<strong>History</strong>
+							<ion-icon name="document-outline" />
+							<strong>Vault</strong>
 						</div>
-					</a>
+					</Link>
 					<Link to="/settings" className="item">
 						<div className="col">
 							<ion-icon name="options-outline" />

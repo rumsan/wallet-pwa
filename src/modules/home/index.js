@@ -9,6 +9,7 @@ import NetworkSettings from '../settings/network';
 import Settings from '../settings';
 import Transfer from '../transfer';
 import Tokens from '../tokens';
+import Vault from '../vault';
 
 function App() {
 	return (
@@ -21,6 +22,7 @@ function App() {
 				<Route exact path="/networks" component={NetworkSettings} />
 				<Route exact path="/settings" component={Settings} />
 				<Route exact path="/transfer" component={Transfer} />
+				<Route exact path="/vault" component={Vault} />
 			</Switch>
 			<Footer />
 		</>
