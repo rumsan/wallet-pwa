@@ -75,7 +75,6 @@ export default function Index() {
 								<button
 									onClick={toggleCameraModal}
 									type="button"
-									style={{ margin: 5 }}
 									className="btn btn-success btn-md"
 									id="btnMnemonic"
 								>
@@ -94,7 +93,6 @@ export default function Index() {
 												<button
 													onClick={handleUploadClick}
 													type="button"
-													style={{ margin: 5 }}
 													className="btn btn-primary btn-md"
 													id="btnUploadDoc"
 												>
