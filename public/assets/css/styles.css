@@ -7688,3 +7688,7 @@ body.dark-mode-active .cart-item .cart-item-footer {
 #newCapsule.full-height {
   min-height: 100vh;
 }
+
+input.pwd {
+	-webkit-text-security: disc;
+}

@@ -53,10 +53,10 @@ export default function Unlock() {
 						<div className="input-wrapper">
 							<input
 								onChange={handleChangePincode}
-								type="password"
+								type="text"
 								pattern="[0-9]*"
 								inputMode="numeric"
-								className="form-control verify-input"
+								className="form-control verify-input pwd"
 								id="unlockCode"
 								placeholder="------"
 								maxLength={6}

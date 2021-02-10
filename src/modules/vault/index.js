@@ -8,8 +8,6 @@ import { uploadToIpfs, dataURLtoFile } from '../../utils';
 const IPFS_VIEW_URL = 'https://ipfs.io/ipfs';
 
 const videoConstraints = {
-	width: '100%',
-	height: 400,
 	facingMode: 'user'
 };
 

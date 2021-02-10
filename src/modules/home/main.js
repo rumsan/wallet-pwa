@@ -115,10 +115,10 @@ export default function Main() {
 						{passcode.length < PASSCODE_LENGTH && (
 							<input
 								onChange={handlePasscodeChange}
-								type="password"
+								type="text"
 								pattern="[0-9]*"
 								inputMode="numeric"
-								className="form-control verify-input passcode"
+								className="form-control verify-input passcode pwd"
 								placeholder="------"
 								maxLength={PASSCODE_LENGTH}
 								autoComplete="false"
