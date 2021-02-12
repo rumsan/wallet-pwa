@@ -21,7 +21,8 @@
     "react-scripts": "3.4.1",
     "react-webcam": "^5.2.2",
     "store": "^2.0.12",
-    "sweetalert2": "^10.13.0"
+    "sweetalert2": "^10.13.0",
+    "uuid": "^8.3.2"
   },
   "scripts": {
     "start": "react-scripts start",
