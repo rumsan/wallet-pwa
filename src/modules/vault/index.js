@@ -14,8 +14,6 @@ import docImg from '../../assets/images/doc.png';
 
 const IPFS_VIEW_URL = 'http://127.0.0.1:8080/ipfs';
 const videoConstraints = {
-	width: '100%',
-	height: 400,
 	facingMode: 'user'
 };
 

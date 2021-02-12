@@ -126,10 +126,10 @@ export default function GoogleRestore() {
 							<div className="input-wrapper">
 								<input
 									onChange={handlePasscodeChange}
-									type="password"
+									type="text"
 									pattern="[0-9]*"
 									inputMode="numeric"
-									className="form-control verify-input"
+									className="form-control verify-input pwd"
 									name="passcode"
 									placeholder="------"
 									maxLength={6}
