@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, createRef } from 'react';
 import { useHistory } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
@@ -8,9 +8,17 @@ import Wallet from '../../utils/blockchain/wallet';
 import Loading from '../global/Loading';
 
 export default function RestoreMnemonic() {
+	const wordCount = 12;
 	let history = useHistory();
 	const { passcode, saveAppWallet } = useContext(AppContext);
 	const [loading, setLoading] = useState(false);
+
+	const wordRefs = React.useRef([]);
+	if (wordRefs.current.length !== wordCount) {
+		wordRefs.current = Array(wordCount)
+			.fill()
+			.map((_, i) => wordRefs.current[i] || createRef());
+	}
 
 	const handleCancelClick = e => {
 		e.preventDefault();
@@ -35,14 +43,32 @@ export default function RestoreMnemonic() {
 		}
 	};
 
+	const handlePaste = e => {
+		e.preventDefault();
+		const clip = e.clipboardData.getData('text').trim();
+		let words = clip.split(' ');
+		words.map((word, i) => {
+			wordRefs.current[i].current.value = word;
+		});
+	};
+
 	let rows = [];
-	for (let i = 0; i < 12; i++) {
+	for (let i = 0; i < wordCount; i++) {
 		let column = (
 			<div key={i + 1} className="col-sm-3">
 				<div className="form-group boxed">
 					<div className="input-wrapper">
 						<label className="label">Word: {i + 1}</label>
-						<input type="text" className="form-control" name={`word${i + 1}`} required />
+						<input
+							type="text"
+							ref={wordRefs.current[i]}
+							value={wordRefs.current[i].current ? wordRefs.current[i].current.value : ''}
+							onChange={e => {}}
+							className="form-control"
+							onPaste={handlePaste}
+							name={`word${i + 1}`}
+							required
+						/>
 					</div>
 				</div>
 			</div>
