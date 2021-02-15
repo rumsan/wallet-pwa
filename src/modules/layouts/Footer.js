@@ -16,6 +16,7 @@ import { mergeAndRemoveDuplicate } from '../../utils/index';
 
 const wallet = getEncryptedWallet();
 const tokens = getTokenAssets();
+const pubKey = getPublicKey();
 const { CONTRACT_NAME } = APP_CONSTANTS;
 
 export default function Footer() {
@@ -28,9 +29,9 @@ export default function Footer() {
 		if (!current) saveCurrentNetwork(network);
 	};
 
+	// TODO Fix loop execution
 	useEffect(() => {
-		(async function fetchMyAssets() {
-			const pubKey = getPublicKey();
+		async function fetchTokenDetails() {
 			const publicKey = address ? address : pubKey;
 			refreshCurrentNetwork();
 			let newData = [];
@@ -49,7 +50,9 @@ export default function Footer() {
 					saveTokens(merged);
 				} catch (err) {}
 			}
-		})();
+		}
+
+		fetchTokenDetails();
 	}, [address, saveTokens]);
 
 	return (

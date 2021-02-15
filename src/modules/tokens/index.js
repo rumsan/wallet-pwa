@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
 import Swal from 'sweetalert2';
+import { useHistory } from 'react-router-dom';
 
 import AppHeader from '../layouts/AppHeader';
 import Loading from '../global/Loading';
@@ -7,12 +8,14 @@ import { AppContext } from '../../contexts/AppContext';
 
 import { getAbi, ethersContract } from '../../utils/blockchain/abi';
 import { mergeAndRemoveDuplicate } from '../../utils/index';
+import EtherImg from '../../assets/images/ether.png';
 import { APP_CONSTANTS } from '../../constants';
 
 const { CONTRACT_NAME } = APP_CONSTANTS;
 
 export default function Index() {
 	const { address, saveTokens, tokenAssets } = useContext(AppContext);
+	let history = useHistory();
 
 	const [contractAddress, setContractAddress] = useState('');
 	const [tokenSymbol, setTokenSymbol] = useState('');
@@ -69,6 +72,9 @@ export default function Index() {
 		resetFormFields();
 	};
 
+	const handleSendClick = () => history.push('/transfer');
+	const handleReceiveClick = () => history.push('/');
+
 	return (
 		<div id="appCapsule">
 			<Loading showModal={loading} message="Fetching token details. Please wait.." />
@@ -78,17 +84,37 @@ export default function Index() {
 				<div className="content-header mb-05">You can import your assets using token contract address.</div>
 			</div>
 			<div className="card-body">
-				<ul className="list-group">
-					{tokenAssets.length > 0 ? (
+				<div className="list-group">
+					<a href="#balance" className="text-center list-group-item list-group-item-action">
+						<button
+							onClick={handleSendClick}
+							type="button"
+							className="btn btn-primary"
+							style={{ marginRight: 10 }}
+						>
+							<ion-icon name="arrow-forward-circle-outline"></ion-icon> Send
+						</button>
+						<button onClick={handleReceiveClick} type="button" className="btn btn-primary">
+							<ion-icon name="arrow-back-circle-outline"></ion-icon> Receive
+						</button>
+					</a>
+					{tokenAssets && tokenAssets.length > 0 ? (
 						tokenAssets.map(token => {
 							return (
-								<li key={token.symbol} className="list-group-item">
-									<ion-icon name="card-outline" />
-									&nbsp;{' '}
-									<span style={{ verticalAlign: 'text-bottom' }}>
-										{token.tokenBalance} {token.symbol}
+								<a
+									key={token.symbol}
+									href="#balance"
+									className="list-group-item list-group-item-action"
+								>
+									<img src={EtherImg} alt="Token" />
+									{token.symbol}
+									<span
+										style={{ float: 'right', marginTop: 10 }}
+										className="badge badge-pill badge-primary pull-right"
+									>
+										{token.tokenBalance}
 									</span>
-								</li>
+								</a>
 							);
 						})
 					) : (
@@ -99,7 +125,7 @@ export default function Index() {
 							</span>
 						</div>
 					)}
-				</ul>
+				</div>
 			</div>
 			<hr />
 			<div id="cmpMain">
@@ -182,7 +208,7 @@ export default function Index() {
 								</div>
 							</form>
 						</div>
-						{contractAddress && tokenSymbol && decimalsPrecision <= 0 && (
+						{contractAddress && tokenSymbol && (
 							<div className="card-footer text-right">
 								<button
 									type="button"

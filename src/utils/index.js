@@ -1,8 +1,13 @@
 const IPFS_CLIENT = require('ipfs-http-client');
+
+const IPFS_HOST = process.env.REACT_APP_IPFS_HOST;
+const IPFS_PORT = process.env.REACT_APP_IPFS_PORT;
+const IPFS_PROTOCOL = process.env.REACT_APP_PROTOCOL;
+
 const ipfs = IPFS_CLIENT({
-	host: 'localhost',
-	port: '5001',
-	protocol: 'http'
+	host: IPFS_HOST,
+	port: IPFS_PORT,
+	protocol: IPFS_PROTOCOL
 });
 
 export function mergeAndRemoveDuplicate(array1 = [], array2 = [], keyName) {
@@ -31,4 +36,8 @@ export function dataURLtoFile(dataurl, filename = 'my_doc') {
 	}
 
 	return new File([u8arr], filename, { type: mime });
+}
+
+export function arraysAreEqual(ary1, ary2) {
+	return ary1.join('') === ary2.join('');
 }
