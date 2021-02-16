@@ -5,7 +5,8 @@ import Swal from 'sweetalert2';
 
 import GFolder from '../../utils/google/gfolder';
 import GFile from '../../utils/google/gfile';
-import { getEncryptedWallet } from '../../utils/sessionManager';
+import { getEncryptedWallet, saveBackupDocs, getBackupDocs, clearBackupDocs } from '../../utils/sessionManager';
+import { DB } from '../../constants';
 
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 const GDriveFolderName = 'RumsanWalletBackup';
@@ -15,6 +16,7 @@ const CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
 export default function GoogleBackup() {
 	const loadGapiClient = () => {
+		initDatabase();
 		gapi.load('client:auth2', initClient);
 	};
 
@@ -37,6 +39,7 @@ export default function GoogleBackup() {
 
 	const createBackup = async () => {
 		try {
+			const backupDocs = getBackupDocs();
 			setLoading(true);
 			const gFolder = new GFolder(gapi);
 			const gFile = new GFile(gapi);
@@ -56,6 +59,7 @@ export default function GoogleBackup() {
 				const encWallet = getEncryptedWallet();
 				if (!encWallet) throw new Error('No wallet available to backup!');
 				const backupData = { wallet: JSON.parse(encWallet) };
+				if (backupDocs && backupDocs.length) backupData.myDocuments = backupDocs;
 				setProgressWidth(80);
 				setProgressMessage('Backing up encrypted wallet to Google Drive...');
 				await gFile.createFile({ name: BackupFileName, data: JSON.stringify(backupData), parentId: folder.id });
@@ -66,6 +70,8 @@ export default function GoogleBackup() {
 			}
 		} catch (e) {
 			Swal.fire('ERROR', e.message, 'error');
+		} finally {
+			clearBackupDocs();
 		}
 	};
 
@@ -91,6 +97,38 @@ export default function GoogleBackup() {
 				},
 				function (error) {}
 			);
+	};
+
+	const initDatabase = () => {
+		let request = window.indexedDB.open(DB.NAME, DB.VERSION);
+		request.onupgradeneeded = e => {
+			let db = request.result;
+			db.createObjectStore(DB.TABLES.DOCUMENTS, { keyPath: 'docId' });
+		};
+		request.onerror = e => {
+			Swal.fire('ERROR', e.target.errorCode, 'error');
+		};
+		request.onsuccess = e => {
+			let db = request.result;
+			fetchDocuments(db);
+		};
+	};
+
+	const fetchDocuments = db => {
+		let myDocs = [];
+		let objectStore = db.transaction(DB.TABLES.DOCUMENTS).objectStore(DB.TABLES.DOCUMENTS);
+		objectStore.openCursor().onsuccess = function (e) {
+			let cursor = e.target.result;
+			if (cursor) {
+				const { docId, docName } = cursor.value;
+				let doc = { docId, docName };
+				myDocs.push(doc);
+				cursor.continue();
+			}
+			setTimeout(() => {
+				saveBackupDocs(myDocs);
+			}, 1000);
+		};
 	};
 
 	useEffect(loadGapiClient, []);

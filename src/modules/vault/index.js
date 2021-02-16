@@ -106,6 +106,28 @@ export default function Index() {
 		};
 	};
 
+	const handleDownloadClick = docName => {
+		const url = `${IPFS_VIEW_URL}/${docName}`;
+		return downloadFile(url, docName);
+	};
+
+	function downloadFile(url, fileName) {
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET', url, true);
+		xhr.responseType = 'blob';
+		xhr.onload = function () {
+			var urlCreator = window.URL || window.webkitURL;
+			var imageUrl = urlCreator.createObjectURL(this.response);
+			var tag = document.createElement('a');
+			tag.href = imageUrl;
+			tag.download = fileName;
+			document.body.appendChild(tag);
+			tag.click();
+			document.body.removeChild(tag);
+		};
+		xhr.send();
+	}
+
 	useEffect(initDatabase, []);
 
 	return (
@@ -164,7 +186,11 @@ export default function Index() {
 															alt="My doc"
 														/>
 														<div className="card-body text-center">
-															<button type="button" className="btn btn-primary">
+															<button
+																type="button"
+																onClick={() => handleDownloadClick(doc.docName)}
+																className="btn btn-primary"
+															>
 																Download
 															</button>
 														</div>

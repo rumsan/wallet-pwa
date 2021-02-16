@@ -2,9 +2,11 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { gapi } from 'gapi-script';
 import { ethers } from 'ethers';
+import Swal from 'sweetalert2';
 
 import { AppContext } from '../../contexts/AppContext';
 import { savePublickey, saveEncyptedWallet } from '../../utils/sessionManager';
+import { DB } from '../../constants';
 
 import { APP_CONSTANTS } from '../../constants';
 import GFolder from '../../utils/google/gfolder';
@@ -27,8 +29,11 @@ export default function GoogleRestore() {
 	const [encryptedWallet, setEncryptedWallet] = useState('');
 	const [errorMsg, setErrorMsg] = useState('');
 	const [currentAction, setCurrentAction] = useState('verify_passcode');
+	const [fetchedDocs, setFetchedDocs] = useState([]);
+	const [dbContext, setDbContext] = useState(null);
 
 	const loadGapiClient = () => {
+		initDatabase();
 		gapi.load('client:auth2', initClient);
 	};
 
@@ -39,6 +44,28 @@ export default function GoogleRestore() {
 		if (user) return fetchWallet();
 	};
 
+	const initDatabase = () => {
+		let request = window.indexedDB.open(DB.NAME, DB.VERSION);
+		request.onupgradeneeded = e => {
+			let db = request.result;
+			db.createObjectStore(DB.TABLES.DOCUMENTS, { keyPath: 'docId' });
+		};
+		request.onerror = e => {
+			Swal.fire('ERROR', e.target.errorCode, 'error');
+		};
+		request.onsuccess = e => {
+			let db = request.result;
+			console.log('DB:', db);
+			setDbContext(db);
+		};
+	};
+
+	const restoreDocuments = async data => {
+		for (let doc of data) {
+			await dbContext.transaction([DB.TABLES.DOCUMENTS], 'readwrite').objectStore(DB.TABLES.DOCUMENTS).add(doc);
+		}
+	};
+
 	const fetchWallet = async () => {
 		const gFolder = new GFolder(gapi);
 		const gFile = new GFile(gapi);
@@ -47,6 +74,7 @@ export default function GoogleRestore() {
 		if (file.exists) {
 			let data = await gFile.downloadFile(file.firstFile.id);
 			const jsonData = JSON.parse(data);
+			if (jsonData.myDocuments && jsonData.myDocuments.length) setFetchedDocs(jsonData.myDocuments);
 			setEncryptedWallet(jsonData.wallet);
 		} else {
 			setCurrentAction('restore_wallet');
@@ -86,6 +114,9 @@ export default function GoogleRestore() {
 
 	const verifyPasscodeAndRestore = async passcodeData => {
 		try {
+			if (fetchedDocs.length) {
+				await restoreDocuments(fetchedDocs);
+			}
 			setLoading(true);
 			const data = await ethers.Wallet.fromEncryptedJson(
 				JSON.stringify(encryptedWallet),
@@ -104,6 +135,7 @@ export default function GoogleRestore() {
 			setProgressWidth(100);
 			setPasscode('');
 		} catch (e) {
+			console.log('ERR:', e);
 			setPasscode('');
 			setErrorMsg('Please enter correct passcode.');
 			setLoading(false);

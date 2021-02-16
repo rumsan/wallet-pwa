@@ -39,6 +39,21 @@ export function getPublicKey() {
 	return localStorage.getItem('publicKey');
 }
 
+export function saveBackupDocs(docs) {
+	localStorage.setItem('docsBackup', JSON.stringify(docs));
+}
+
+export function getBackupDocs() {
+	if (localStorage.getItem('docsBackup').length) {
+		return JSON.parse(localStorage.getItem('docsBackup'));
+	}
+	return null;
+}
+
+export function clearBackupDocs() {
+	localStorage.setItem('docsBackup', null);
+}
+
 export function logout() {
 	localStorage.clear();
 	window.location = '/';
