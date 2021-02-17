@@ -10,6 +10,7 @@ const initialState = {
 	wallet: null,
 	lockScreen: false,
 	scannedEthAddress: '',
+	scannedAmount: null,
 	phrases: [],
 	encryptedWallet: '',
 	passcode: '' // To restore from mnemonic
@@ -31,8 +32,8 @@ export const AppContextProvider = ({ children }) => {
 		dispatch({ type: APP_ACTIONS.UNLOCK_APP, data: false });
 	}
 
-	function saveScannedAddress(address) {
-		dispatch({ type: APP_ACTIONS.SET_SCANNED_ADDRESS, data: address });
+	function saveScannedAddress(data) {
+		dispatch({ type: APP_ACTIONS.SET_SCANNED_ADDRESS, data });
 	}
 
 	function changeCurrentNetwork(name, url) {
@@ -63,6 +64,7 @@ export const AppContextProvider = ({ children }) => {
 				phrases: state.phrases,
 				privateKey: state.privateKey,
 				scannedEthAddress: state.scannedEthAddress,
+				scannedAmount: state.scannedAmount,
 				wallet: state.wallet,
 				changeCurrentNetwork,
 				saveScannedAddress,

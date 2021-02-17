@@ -5,7 +5,7 @@ import { useHistory } from 'react-router-dom';
 import ModalWrapper from '../global/ModalWrapper';
 import Loading from '../global/Loading';
 import Wallet from '../../utils/blockchain/wallet';
-import QRScanner from '../qr_scanner';
+import QR_GENERATE from '../qr_generator';
 import SetupButton from './setupButton';
 import { AppContext } from '../../contexts/AppContext';
 import { getPublicKey, getEncryptedWallet } from '../../utils/sessionManager';
@@ -181,7 +181,7 @@ export default function Main() {
 					{currentPublicKey ? (
 						<div className="card">
 							<div className="pl-4 pt-3 pr-4 text-center">
-								<QRScanner publicKey={currentPublicKey || address} />
+								<QR_GENERATE publicKey={currentPublicKey || address} />
 							</div>
 						</div>
 					) : (

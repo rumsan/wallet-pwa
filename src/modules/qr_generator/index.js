@@ -37,7 +37,7 @@ export default function Index({ publicKey }) {
 	useEffect(fetchMyBalance, []);
 
 	const [inputRef] = useQRCode({
-		text: `${publicKey ? publicKey : ''}`,
+		text: `${publicKey ? 'ethereum:' + publicKey : ''}`,
 		options: {
 			level: 'M',
 			margin: 7,

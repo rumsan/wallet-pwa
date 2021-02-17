@@ -32,7 +32,15 @@ export default function UnlockedFooter() {
 	};
 	const handlScanSuccess = data => {
 		if (data) {
-			saveScannedAddress(data);
+			let eth = data.includes('ethereum');
+			if (!eth) data = 'ethereum:' + data;
+			let properties = data.split(', ');
+			let obj = {};
+			properties.forEach(function (property) {
+				let tup = property.split(':');
+				obj[tup[0]] = tup[1].trim();
+			});
+			saveScannedAddress(obj);
 			handleScanModalToggle();
 			history.push('/transfer');
 		}

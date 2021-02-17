@@ -32,7 +32,7 @@ const camStyle = {
 };
 
 export default function Index() {
-	const { privateKey, saveScannedAddress, scannedEthAddress } = useContext(AppContext);
+	const { privateKey, saveScannedAddress, scannedAmount, scannedEthAddress } = useContext(AppContext);
 	let history = useHistory();
 
 	const [sendAmount, setSendAmount] = useState('');
@@ -49,7 +49,15 @@ export default function Index() {
 	};
 	const handlScanSuccess = data => {
 		if (data) {
-			saveScannedAddress(data);
+			let eth = data.includes('ethereum');
+			if (!eth) data = 'ethereum:' + data;
+			let properties = data.split(', ');
+			let obj = {};
+			properties.forEach(function (property) {
+				let tup = property.split(':');
+				obj[tup[0]] = tup[1].trim();
+			});
+			saveScannedAddress(obj);
 			handleScanModalToggle();
 		}
 	};
@@ -193,7 +201,8 @@ export default function Index() {
 			history.push('/');
 		}
 		scannedEthAddress && setSendToAddress(scannedEthAddress);
-	}, [history, privateKey, scannedEthAddress]);
+		scannedAmount && setSendAmount(scannedAmount);
+	}, [history, privateKey, scannedAmount, scannedEthAddress]);
 
 	return (
 		<>

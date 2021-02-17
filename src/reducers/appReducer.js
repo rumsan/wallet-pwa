@@ -22,7 +22,8 @@ export default (state, action) => {
 		case APP_ACTIONS.SET_SCANNED_ADDRESS:
 			return {
 				...state,
-				scannedEthAddress: action.data
+				scannedEthAddress: action.data.ethereum,
+				scannedAmount: action.data.amount ? parseInt(action.data.amount) : null
 			};
 
 		case APP_ACTIONS.LOCK_APP:
