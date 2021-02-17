@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import { useHistory } from 'react-router-dom';
 
@@ -6,6 +6,7 @@ import AppHeader from '../layouts/AppHeader';
 import Loading from '../global/Loading';
 import { AppContext } from '../../contexts/AppContext';
 
+import { getTokenAssets } from '../../utils/sessionManager';
 import { getAbi, ethersContract } from '../../utils/blockchain/abi';
 import { mergeAndRemoveDuplicate } from '../../utils/index';
 import EtherImg from '../../assets/images/ether.png';
@@ -14,7 +15,7 @@ import { APP_CONSTANTS } from '../../constants';
 const { CONTRACT_NAME } = APP_CONSTANTS;
 
 export default function Index() {
-	const { address, saveTokens, tokenAssets } = useContext(AppContext);
+	const { address, saveTokens } = useContext(AppContext);
 	let history = useHistory();
 
 	const [contractAddress, setContractAddress] = useState('');
@@ -22,6 +23,8 @@ export default function Index() {
 	const [decimalsPrecision, setDecimalsPrecision] = useState('');
 	const [tokenBalance, setTokenBalance] = useState(0);
 	const [loading, setLoading] = useState(false);
+	const [tokenAssets, setTokenAssets] = useState([]);
+	const [assetFetched, setAssetFeched] = useState(false);
 
 	const changeInputContractAddress = async e => {
 		const { value } = e.target;
@@ -67,10 +70,16 @@ export default function Index() {
 		};
 		newData.push(data);
 		const merged = mergeAndRemoveDuplicate(existing, newData, 'symbol');
+		setAssetFeched(true);
 		saveTokens(merged);
 		Swal.fire('Success', 'Token added successfully.', 'success');
 		resetFormFields();
 	};
+
+	useEffect(() => {
+		const _tokens = getTokenAssets();
+		setTokenAssets(_tokens);
+	}, [assetFetched]);
 
 	const handleSendClick = () => history.push('/transfer');
 	const handleReceiveClick = () => history.push('/');

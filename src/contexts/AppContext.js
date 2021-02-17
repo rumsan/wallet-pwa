@@ -12,7 +12,6 @@ const initialState = {
 	scannedEthAddress: '',
 	phrases: [],
 	encryptedWallet: '',
-	tokenAssets: [],
 	passcode: '' // To restore from mnemonic
 };
 
@@ -51,10 +50,7 @@ export const AppContextProvider = ({ children }) => {
 	}
 
 	function saveTokens(tokens) {
-		if (tokens.length) {
-			saveTokenAssets(tokens);
-			// dispatch({ type: APP_ACTIONS.SET_TOKEN_ASSETS, data: tokens });
-		}
+		if (tokens.length) saveTokenAssets(tokens);
 	}
 
 	return (
@@ -68,7 +64,6 @@ export const AppContextProvider = ({ children }) => {
 				privateKey: state.privateKey,
 				scannedEthAddress: state.scannedEthAddress,
 				wallet: state.wallet,
-				tokenAssets: state.tokenAssets,
 				changeCurrentNetwork,
 				saveScannedAddress,
 				unlockAppScreen,

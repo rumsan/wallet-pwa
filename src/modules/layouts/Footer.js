@@ -29,7 +29,6 @@ export default function Footer() {
 		if (!current) saveCurrentNetwork(network);
 	};
 
-	// TODO Fix loop execution
 	useEffect(() => {
 		async function fetchTokenDetails() {
 			const publicKey = address ? address : pubKey;

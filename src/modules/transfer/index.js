@@ -11,6 +11,7 @@ import AppHeader from '../layouts/AppHeader';
 import ModalWrapper from '../global/ModalWrapper';
 import { APP_CONSTANTS } from '../../constants';
 import { getAbi, ethersWallet } from '../../utils/blockchain/abi';
+import { getTokenAssets } from '../../utils/sessionManager';
 
 const { CONTRACT_NAME } = APP_CONSTANTS;
 const { SCAN_DELAY } = APP_CONSTANTS;
@@ -31,7 +32,7 @@ const camStyle = {
 };
 
 export default function Index() {
-	const { tokenAssets, privateKey, saveScannedAddress, scannedEthAddress } = useContext(AppContext);
+	const { privateKey, saveScannedAddress, scannedEthAddress } = useContext(AppContext);
 	let history = useHistory();
 
 	const [sendAmount, setSendAmount] = useState('');
@@ -39,6 +40,7 @@ export default function Index() {
 	const [loadingModal, setLoadingModal] = useState(false);
 	const [scanModal, setScanModal] = useState(false);
 	const [sendingToken, setSendingToken] = useState(DEFAULT_TOKEN);
+	const [tokenAssets, setTokenAssets] = useState([]);
 
 	const handleScanModalToggle = () => setScanModal(!scanModal);
 
@@ -185,6 +187,8 @@ export default function Index() {
 	};
 
 	useEffect(() => {
+		const _tokens = getTokenAssets();
+		setTokenAssets(_tokens);
 		if (!privateKey) {
 			history.push('/');
 		}

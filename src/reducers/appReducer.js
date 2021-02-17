@@ -13,12 +13,6 @@ export default (state, action) => {
 				encryptedWallet
 			};
 
-		case APP_ACTIONS.SET_TOKEN_ASSETS:
-			return {
-				...state,
-				tokenAssets: action.data
-			};
-
 		case APP_ACTIONS.SET_APP_PASSCODE:
 			return {
 				...state,

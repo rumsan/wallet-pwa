@@ -4,6 +4,5 @@ module.exports = {
 	LOCK_APP: 'lock_app_screen',
 	UNLOCK_APP: 'unlock_app_screen',
 	SET_SCANNED_ADDRESS: 'set_scanned_eth_address',
-	SET_APP_PASSCODE: 'set_app_passcode',
-	SET_TOKEN_ASSETS: 'set_token_assets'
+	SET_APP_PASSCODE: 'set_app_passcode'
 };
