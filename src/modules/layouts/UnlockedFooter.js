@@ -34,12 +34,13 @@ export default function UnlockedFooter() {
 		if (data) {
 			let eth = data.includes('ethereum');
 			if (!eth) data = 'ethereum:' + data;
-			let properties = data.split(', ');
+			let properties = data.split(',');
 			let obj = {};
 			properties.forEach(function (property) {
 				let tup = property.split(':');
 				obj[tup[0]] = tup[1].trim();
 			});
+			console.log('==>', obj);
 			saveScannedAddress(obj);
 			handleScanModalToggle();
 			history.push('/transfer');
