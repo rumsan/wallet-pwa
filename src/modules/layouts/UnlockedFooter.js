@@ -40,7 +40,7 @@ export default function UnlockedFooter() {
 				let tup = property.split(':');
 				obj[tup[0]] = tup[1].trim();
 			});
-			console.log('==>', obj);
+			console.log('OBJECT==>', obj);
 			saveScannedAddress(obj);
 			handleScanModalToggle();
 			history.push('/transfer');
