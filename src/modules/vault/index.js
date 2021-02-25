@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import AppHeader from '../layouts/AppHeader';
 import ModalWrapper from '../../modules/global/ModalWrapper';
 import ActionButton from './actionButton';
+import ImageViewer from '../../modules/global/ImageViewer';
 
 import { uploadToIpfs, dataURLtoFile } from '../../utils';
 import { DB } from '../../constants';
@@ -20,9 +21,17 @@ const videoConstraints = {
 export default function Index() {
 	const [cameraModal, setCameraModal] = useState(false);
 	const [previewImage, setPreviewImage] = useState('');
+	const [imageViewModal, setImageViewModal] = useState(false);
+	const [currentDocument, setCurrentDocument] = useState('');
 
 	const [dbContext, setDbContext] = useState(null);
 	const [myDocuments, setMyDocuments] = useState([]);
+
+	const toggleImageViewModal = (e, docName) => {
+		if (e) e.preventDefault();
+		setCurrentDocument(docName);
+		setImageViewModal(!imageViewModal);
+	};
 
 	const toggleCameraModal = () => {
 		setCameraModal(!cameraModal);
@@ -80,7 +89,6 @@ export default function Index() {
 			.add(payload);
 
 		request.onsuccess = function (e) {
-			console.log('Success');
 			fetchDocuments(dbContext);
 		};
 		request.onerror = function (e) {
@@ -106,9 +114,10 @@ export default function Index() {
 		};
 	};
 
-	const handleDownloadClick = docName => {
-		const url = `${IPFS_VIEW_URL}/${docName}`;
-		return downloadFile(url, docName);
+	const handleDownloadClick = e => {
+		e.preventDefault();
+		const url = `${IPFS_VIEW_URL}/${currentDocument}`;
+		return downloadFile(url, currentDocument);
 	};
 
 	function downloadFile(url, fileName) {
@@ -132,6 +141,19 @@ export default function Index() {
 
 	return (
 		<>
+			<ImageViewer
+				handleDownloadClick={handleDownloadClick}
+				showModal={imageViewModal}
+				handleModal={toggleImageViewModal}
+			>
+				<div role="document">
+					<div className="modal-content">
+						<div className="story-image">
+							<img width="100%" src={`${IPFS_VIEW_URL}/${currentDocument}`} alt="My document" />
+						</div>
+					</div>
+				</div>
+			</ImageViewer>
 			<ModalWrapper modalSize="lg" title="Take a picture" showModal={cameraModal} handleModal={toggleCameraModal}>
 				<div style={{ padding: 10 }}>
 					<Webcam
@@ -160,6 +182,24 @@ export default function Index() {
 							<div className="content-header mb-05">
 								<p>Manage your documents</p>
 								<div className="row" style={{ marginBottom: 30 }}>
+									{myDocuments.length > 0 &&
+										myDocuments.map(doc => {
+											return (
+												<div key={doc.docId} className="col-sm-3" style={{ marginTop: 15 }}>
+													<div
+														className="card"
+														onClick={e => toggleImageViewModal(e, doc.docName)}
+													>
+														<img
+															className="card-img-top"
+															src={`${IPFS_VIEW_URL}/${doc.docName}`}
+															alt="My doc"
+															height="282"
+														/>
+													</div>
+												</div>
+											);
+										})}
 									{previewImage ? (
 										<ActionButton
 											btnText="Upload Now"
@@ -175,29 +215,6 @@ export default function Index() {
 											iconName="add-outline"
 										/>
 									)}
-									{myDocuments.length > 0 &&
-										myDocuments.map(doc => {
-											return (
-												<div key={doc.docId} className="col-sm-3" style={{ marginTop: 15 }}>
-													<div className="card">
-														<img
-															className="card-img-top"
-															src={`${IPFS_VIEW_URL}/${doc.docName}`}
-															alt="My doc"
-														/>
-														<div className="card-body text-center">
-															<button
-																type="button"
-																onClick={() => handleDownloadClick(doc.docName)}
-																className="btn btn-primary"
-															>
-																Download
-															</button>
-														</div>
-													</div>
-												</div>
-											);
-										})}
 								</div>
 							</div>
 						</form>
