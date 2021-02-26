@@ -22,6 +22,7 @@ export default function Index() {
 	const [tokenSymbol, setTokenSymbol] = useState('');
 	const [decimalsPrecision, setDecimalsPrecision] = useState('');
 	const [tokenBalance, setTokenBalance] = useState(0);
+	const [tokenName, setTokenName] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [tokenAssets, setTokenAssets] = useState([]);
 	const [assetFetched, setAssetFeched] = useState(false);
@@ -45,9 +46,11 @@ export default function Index() {
 			setLoading(true);
 			let tokenAbi = await getAbi(CONTRACT_NAME);
 			let TokenContract = await ethersContract(tokenAbi, contractAddress);
+			let name = await TokenContract.name();
 			let symbol = await TokenContract.symbol();
 			let decimals = await TokenContract.decimals();
 			let balance = await TokenContract.balanceOf(address);
+			setTokenName(name);
 			setTokenBalance(balance.toNumber());
 			setTokenSymbol(symbol);
 			setDecimalsPrecision(decimals);
@@ -63,6 +66,7 @@ export default function Index() {
 		let existing = tokenAssets || [];
 		let newData = [];
 		const data = {
+			tokenName: tokenName,
 			contract: contractAddress,
 			symbol: tokenSymbol,
 			decimal: decimalsPrecision,
@@ -81,63 +85,47 @@ export default function Index() {
 		setTokenAssets(_tokens);
 	}, [assetFetched]);
 
-	const handleSendClick = () => history.push('/transfer');
-	const handleReceiveClick = () => history.push('/');
+	const handleSendClick = e => {
+		e.preventDefault();
+		history.push('/transfer');
+	};
 
 	return (
 		<div id="appCapsule">
 			<Loading showModal={loading} message="Fetching token details. Please wait.." />
 			<AppHeader currentMenu="Assets" />
-			<div className="section full mt-2">
-				<div className="section-title">Your Assets:</div>
-				<div className="content-header mb-05">You can import your assets using token contract address.</div>
-			</div>
 			<div className="card-body">
-				<div className="list-group">
-					<a href="#balance" className="text-center list-group-item list-group-item-action">
-						<button
-							onClick={handleSendClick}
-							type="button"
-							className="btn btn-primary"
-							style={{ marginRight: 10 }}
-						>
-							<ion-icon name="arrow-forward-circle-outline"></ion-icon> Send
-						</button>
-						<button onClick={handleReceiveClick} type="button" className="btn btn-primary">
-							<ion-icon name="arrow-back-circle-outline"></ion-icon> Receive
-						</button>
-					</a>
-					{tokenAssets && tokenAssets.length > 0 ? (
-						tokenAssets.map(token => {
-							return (
-								<a
-									key={token.symbol}
-									href="#balance"
-									className="list-group-item list-group-item-action"
-								>
-									<img src={EtherImg} alt="Token" />
-									{token.symbol}
-									<span
-										style={{ float: 'right', marginTop: 10 }}
-										className="badge badge-pill badge-primary pull-right"
-									>
-										{token.tokenBalance}
-									</span>
-								</a>
-							);
-						})
-					) : (
-						<div>
-							<ion-icon name="information-circle-outline"></ion-icon>{' '}
-							<span style={{ verticalAlign: 'text-bottom' }}>
-								<small>Your assets will appear here.</small>
-							</span>
-						</div>
-					)}
+				<div>
+					<div className="listview-title mt-2">Your Token Assets</div>
+					<ul className="listview image-listview">
+						{tokenAssets && tokenAssets.length > 0 ? (
+							tokenAssets.map(token => {
+								return (
+									<li key={token.symbol}>
+										<a href="#send" className="item" onClick={e => handleSendClick(e)}>
+											<img src={EtherImg} alt="Token Icon" className="image" />
+											<div className="in">
+												<div>{token.tokenName || 'N/A'}</div>
+												<span className="text-muted">
+													{token.tokenBalance} {token.symbol}
+												</span>
+											</div>
+										</a>
+									</li>
+								);
+							})
+						) : (
+							<div style={{ padding: 20 }}>
+								<span>
+									<small>Your assets will appear here...</small>
+								</span>
+							</div>
+						)}
+					</ul>
 				</div>
 			</div>
-			<hr />
-			<div id="cmpMain">
+
+			<div id="cmpMain" style={{ display: 'none' }}>
 				<div className="section mt-2 mb-5">
 					<div className="card mt-5" id="cmpTransfer">
 						<div className="card-body">

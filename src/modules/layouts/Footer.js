@@ -41,9 +41,10 @@ export default function Footer() {
 						let TokenContract = await ethersContract(tokenAbi, t.contract);
 						let balance = await TokenContract.balanceOf(publicKey);
 						let tokenBalance = balance.toNumber();
+						let tokenName = await TokenContract.name();
 						let symbol = await TokenContract.symbol();
 						let decimal = await TokenContract.decimals();
-						newData.push({ contract: t.contract, tokenBalance, symbol, decimal });
+						newData.push({ contract: t.contract, tokenBalance, symbol, decimal, tokenName });
 					}
 					const merged = mergeAndRemoveDuplicate(tokens, newData, 'symbol');
 					saveTokens(merged);
