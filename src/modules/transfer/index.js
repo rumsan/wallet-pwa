@@ -13,8 +13,7 @@ import { APP_CONSTANTS } from '../../constants';
 import { getAbi, ethersWallet } from '../../utils/blockchain/abi';
 import { getTokenAssets } from '../../utils/sessionManager';
 
-const { CONTRACT_NAME } = APP_CONSTANTS;
-const { SCAN_DELAY } = APP_CONSTANTS;
+const { CONTRACT_NAME, SCAN_DELAY } = APP_CONSTANTS;
 const DEFAULT_TOKEN = 'ETH';
 
 const previewStyle = {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-export default function AppHeader({ currentMenu }) {
+export default function AppHeader({ handleIconClick, currentMenu, iconName }) {
 	return (
 		<div className="appHeader bg-primary text-light">
 			<div className="left">
@@ -11,9 +11,15 @@ export default function AppHeader({ currentMenu }) {
 			</div>
 			<div className="pageTitle">{currentMenu || 'Home'}</div>
 			<div className="right">
-				<Link to="/" className="headerButton">
-					<ion-icon name="home-outline" />
-				</Link>
+				{handleIconClick ? (
+					<a href="#target" onClick={e => handleIconClick(e)} className="headerButton">
+						<ion-icon name={iconName || 'home-outline'} />
+					</a>
+				) : (
+					<Link to="/" className="headerButton">
+						<ion-icon name={iconName || 'home-outline'} />
+					</Link>
+				)}
 			</div>
 		</div>
 	);

@@ -60,16 +60,16 @@ export default function UnlockedFooter() {
 			</ModalWrapper>
 			<div className="footer-unlocked">
 				<div className="appBottomMenu">
+					<Link to="/" className="item">
+						<div className="col">
+							<ion-icon name="home-outline" />
+							<strong>Home</strong>
+						</div>
+					</Link>
 					<Link to="/tokens" className="item">
 						<div className="col">
 							<ion-icon name="briefcase-outline" />
 							<strong>Assets</strong>
-						</div>
-					</Link>
-					<Link to="/transfer" className="item">
-						<div className="col">
-							<ion-icon name="paper-plane-outline" />
-							<strong>Transfer</strong>
 						</div>
 					</Link>
 					<a href="#home" className="item" id="btnScanner" onClick={handleScanModalToggle}>
