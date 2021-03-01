@@ -3,6 +3,7 @@ module.exports = {
 	SET_APP_WALLET: 'set_app_wallet',
 	LOCK_APP: 'lock_app_screen',
 	UNLOCK_APP: 'unlock_app_screen',
-	SET_SCANNED_ADDRESS: 'set_scanned_eth_address',
-	SET_APP_PASSCODE: 'set_app_passcode'
+	SET_SCCANNED_DATA: 'set_scanned_eth_address',
+	SET_APP_PASSCODE: 'set_app_passcode',
+	SET_SENDING_TOKEN_NAME: 'SET_SENDING_TOKEN_NAME'
 };

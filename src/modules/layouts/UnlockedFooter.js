@@ -4,6 +4,7 @@ import QrReader from 'react-qr-reader';
 import ModalWrapper from '../global/ModalWrapper';
 import { AppContext } from '../../contexts/AppContext';
 import { APP_CONSTANTS } from '../../constants';
+import Swal from 'sweetalert2';
 
 const previewStyle = {
 	height: 300,
@@ -22,7 +23,7 @@ const { SCAN_DELAY } = APP_CONSTANTS;
 
 export default function UnlockedFooter() {
 	let history = useHistory();
-	const { saveScannedAddress } = useContext(AppContext);
+	const { saveScannedAddress, saveSendingTokenName } = useContext(AppContext);
 	const [scanModal, setScanModal] = useState(false);
 
 	const handleScanModalToggle = () => setScanModal(!scanModal);
@@ -32,20 +33,34 @@ export default function UnlockedFooter() {
 	};
 	const handlScanSuccess = data => {
 		if (data) {
-			let eth = data.includes('ethereum');
-			if (!eth) data = 'ethereum:' + data;
-			let properties = data.split(',');
-			let obj = {};
-			properties.forEach(function (property) {
-				let tup = property.split(':');
-				obj[tup[0]] = tup[1].trim();
-			});
-			console.log('OBJECT==>', obj);
-			saveScannedAddress(obj);
-			handleScanModalToggle();
-			history.push('/transfer');
+			//	let eth = data.includes('ethereum');
+			//	if (!eth) data = 'ethereum:' + data;
+			try {
+				let properties = data.split(',');
+				let obj = {};
+				properties.forEach(function (property) {
+					let tup = property.split(':');
+					obj[tup[0]] = tup[1].trim();
+				});
+				const tokenName = Object.getOwnPropertyNames(obj)[0];
+				obj.address = obj[tokenName];
+				saveTokenSymbolToCtx(tokenName);
+				saveScannedAddress(obj);
+				handleScanModalToggle();
+				history.push('/transfer');
+			} catch (err) {
+				console.log('ERR:', err);
+				handleScanModalToggle();
+				Swal.fire('ERROR', 'Invalid wallet address!', 'error');
+			}
 		}
 	};
+
+	const saveTokenSymbolToCtx = tokenName => {
+		if (tokenName === 'ethereum') saveSendingTokenName('ethereum');
+		else saveSendingTokenName(tokenName);
+	};
+
 	return (
 		<>
 			<ModalWrapper title="Scan a QR Code" showModal={scanModal} handleModal={handleScanModalToggle}>

@@ -14,7 +14,7 @@ import { getAbi, ethersWallet } from '../../utils/blockchain/abi';
 import { getTokenAssets } from '../../utils/sessionManager';
 
 const { CONTRACT_NAME, SCAN_DELAY } = APP_CONSTANTS;
-const DEFAULT_TOKEN = 'ETH';
+const DEFAULT_TOKEN = '';
 
 const previewStyle = {
 	height: 300,
@@ -31,14 +31,21 @@ const camStyle = {
 };
 
 export default function Index() {
-	const { privateKey, saveScannedAddress, scannedAmount, scannedEthAddress } = useContext(AppContext);
+	const {
+		privateKey,
+		saveScannedAddress,
+		scannedAmount,
+		scannedEthAddress,
+		saveSendingTokenName,
+		sendingTokenName
+	} = useContext(AppContext);
 	let history = useHistory();
 
 	const [sendAmount, setSendAmount] = useState('');
 	const [sendToAddress, setSendToAddress] = useState('');
 	const [loadingModal, setLoadingModal] = useState(false);
 	const [scanModal, setScanModal] = useState(false);
-	const [sendingToken, setSendingToken] = useState(DEFAULT_TOKEN);
+	const [sendingToken, setSendingTokenSymbol] = useState(DEFAULT_TOKEN);
 	const [tokenAssets, setTokenAssets] = useState([]);
 
 	const handleScanModalToggle = () => setScanModal(!scanModal);
@@ -48,17 +55,29 @@ export default function Index() {
 	};
 	const handlScanSuccess = data => {
 		if (data) {
-			let eth = data.includes('ethereum');
-			if (!eth) data = 'ethereum:' + data;
-			let properties = data.split(', ');
-			let obj = {};
-			properties.forEach(function (property) {
-				let tup = property.split(':');
-				obj[tup[0]] = tup[1].trim();
-			});
-			saveScannedAddress(obj);
-			handleScanModalToggle();
+			try {
+				let properties = data.split(',');
+				let obj = {};
+				properties.forEach(function (property) {
+					let tup = property.split(':');
+					obj[tup[0]] = tup[1].trim();
+				});
+				const tokenName = Object.getOwnPropertyNames(obj)[0];
+				obj.address = obj[tokenName];
+				saveTokenSymbolToCtx(tokenName);
+				saveScannedAddress(obj);
+				handleScanModalToggle();
+				history.push('/transfer');
+			} catch (err) {
+				handleScanModalToggle();
+				Swal.fire('ERROR', 'Invalid wallet address!', 'error');
+			}
 		}
+	};
+
+	const saveTokenSymbolToCtx = tokenName => {
+		if (tokenName === 'ethereum') saveSendingTokenName('ethereum');
+		else saveSendingTokenName(tokenName);
 	};
 
 	const handleSendToChange = e => {
@@ -72,7 +91,7 @@ export default function Index() {
 	const resetFormStates = () => {
 		setLoadingModal(false);
 		setSendAmount('');
-		setSendingToken(DEFAULT_TOKEN);
+		setSendingTokenSymbol(DEFAULT_TOKEN);
 		setSendToAddress('');
 	};
 
@@ -182,6 +201,7 @@ export default function Index() {
 	};
 
 	const handleSendClick = () => {
+		if (!sendingToken) return Swal.fire('ERROR', 'Please select token you want to transfer', 'error');
 		if (!sendAmount || !sendToAddress) {
 			return Swal.fire({ title: 'ERROR', icon: 'error', text: 'Send amount and receiver address is required' });
 		}
@@ -190,18 +210,43 @@ export default function Index() {
 
 	const handleChangeTokenSelect = e => {
 		const { value } = e.target;
-		setSendingToken(value);
+		setSendingTokenSymbol(value);
 	};
 
 	useEffect(() => {
-		const _tokens = getTokenAssets();
+		const _tokens = getTokenAssets() || [];
 		setTokenAssets(_tokens);
+		//sendingTokenName => Scanned token name
+		if (sendingTokenName) {
+			const found = _tokens.find(item => item.tokenName === sendingTokenName);
+			if (found) {
+				setSendingTokenSymbol(found.symbol);
+			} else {
+				if (sendingTokenName === 'ethereum') setSendingTokenSymbol('ETH');
+				else {
+					setSendingTokenSymbol('');
+					Swal.fire({
+						title: 'Asset not available',
+						text: `Would you like to add ${sendingTokenName} asset now?`,
+						showCancelButton: true,
+						confirmButtonColor: '#3085d6',
+						cancelButtonColor: '#d33',
+						confirmButtonText: 'Yes',
+						cancelButtonText: 'No'
+					}).then(res => {
+						if (res.isConfirmed) history.push('/import-token');
+					});
+				}
+			}
+		}
+
+		scannedEthAddress && setSendToAddress(scannedEthAddress);
+		scannedAmount && setSendAmount(scannedAmount);
+
 		if (!privateKey) {
 			history.push('/');
 		}
-		scannedEthAddress && setSendToAddress(scannedEthAddress);
-		scannedAmount && setSendAmount(scannedAmount);
-	}, [history, privateKey, scannedAmount, scannedEthAddress]);
+	}, [history, privateKey, scannedAmount, scannedEthAddress, sendingTokenName]);
 
 	return (
 		<>
@@ -235,13 +280,25 @@ export default function Index() {
 														onChange={handleChangeTokenSelect}
 														name="selectToken"
 													>
-														<option value={`${DEFAULT_TOKEN}`}>ETH (Ether)</option>
+														<option value="">--Select Token--</option>
+														<option
+															selected={sendingToken === 'ETH' ? true : false}
+															value="ETH"
+														>
+															Ether (ETH)
+														</option>
 														{tokenAssets &&
 															tokenAssets.length > 0 &&
 															tokenAssets.map(item => {
 																return (
-																	<option key={item.symbol} value={item.symbol}>
-																		{item.symbol}
+																	<option
+																		key={item.symbol}
+																		value={item.symbol}
+																		selected={
+																			sendingToken === item.symbol ? true : false
+																		}
+																	>
+																		{item.tokenName} ({item.symbol})
 																	</option>
 																);
 															})}

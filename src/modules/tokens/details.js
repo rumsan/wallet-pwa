@@ -1,23 +1,31 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import AppHeader from '../layouts/AppHeader';
 import EtherImg from '../../assets/images/ether.png';
 import { useHistory } from 'react-router-dom';
 import { getTokenAssets } from '../../utils/sessionManager';
 
+import { AppContext } from '../../contexts/AppContext';
+const tokens = getTokenAssets();
+
 export default function Details(props) {
-	const { symbol } = props.match.params;
 	let history = useHistory();
+	const { saveSendingTokenName } = useContext(AppContext);
+
+	const { symbol } = props.match.params;
 	const [tokenDetails, setTokenDetails] = useState(null);
 
 	const getTokenDetails = () => {
-		const tokens = getTokenAssets();
 		const details = tokens.find(item => item.symbol === symbol);
 		if (details) setTokenDetails(details);
 	};
 
 	useEffect(getTokenDetails, [symbol]);
 
-	const handleTransferClick = () => history.push('/transfer');
+	const handleTransferClick = () => {
+		const details = tokens.find(item => item.symbol === symbol);
+		if (details) saveSendingTokenName(details.tokenName);
+		history.push('/transfer');
+	};
 	return (
 		<>
 			<AppHeader currentMenu="Token Details" />

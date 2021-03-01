@@ -19,11 +19,17 @@ export default (state, action) => {
 				passcode: action.data
 			};
 
-		case APP_ACTIONS.SET_SCANNED_ADDRESS:
+		case APP_ACTIONS.SET_SCCANNED_DATA:
 			return {
 				...state,
-				scannedEthAddress: action.data.ethereum,
-				scannedAmount: action.data.amount ? parseInt(action.data.amount) : null
+				scannedEthAddress: action.data.address,
+				scannedAmount: action.data.amount ? action.data.amount : null
+			};
+
+		case APP_ACTIONS.SET_SENDING_TOKEN_NAME:
+			return {
+				...state,
+				sendingTokenName: action.data
 			};
 
 		case APP_ACTIONS.LOCK_APP:

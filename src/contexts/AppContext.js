@@ -5,6 +5,7 @@ import { getNetworkByName } from '../constants/networks';
 import { saveCurrentNetwork, saveTokenAssets } from '../utils/sessionManager';
 
 const initialState = {
+	sendingTokenName: '',
 	privateKey: null,
 	address: null, // Public Key
 	wallet: null,
@@ -33,7 +34,7 @@ export const AppContextProvider = ({ children }) => {
 	}
 
 	function saveScannedAddress(data) {
-		dispatch({ type: APP_ACTIONS.SET_SCANNED_ADDRESS, data });
+		dispatch({ type: APP_ACTIONS.SET_SCCANNED_DATA, data });
 	}
 
 	function changeCurrentNetwork(name, url) {
@@ -54,6 +55,10 @@ export const AppContextProvider = ({ children }) => {
 		if (tokens.length) saveTokenAssets(tokens);
 	}
 
+	function saveSendingTokenName(symbol) {
+		dispatch({ type: APP_ACTIONS.SET_SENDING_TOKEN_NAME, data: symbol });
+	}
+
 	return (
 		<AppContext.Provider
 			value={{
@@ -66,6 +71,8 @@ export const AppContextProvider = ({ children }) => {
 				scannedEthAddress: state.scannedEthAddress,
 				scannedAmount: state.scannedAmount,
 				wallet: state.wallet,
+				sendingTokenName: state.sendingTokenName,
+				saveSendingTokenName,
 				changeCurrentNetwork,
 				saveScannedAddress,
 				unlockAppScreen,
