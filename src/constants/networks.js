@@ -1,9 +1,14 @@
 const networks = [
 	{
 		name: 'rumsan',
-		url: 'https://testnetwork.esatya.io',
+		url: 'https://chain.esatya.io',
 		display: 'Rumsan Network',
 		default: true
+	},
+	{
+		name: 'rumsan_testnet',
+		url: 'https://testnetwork.esatya.io',
+		display: 'Rumsan Test Network'
 	},
 	{
 		name: 'mainnet',
