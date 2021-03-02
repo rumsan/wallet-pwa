@@ -48,7 +48,8 @@ export default function RestoreMnemonic() {
 		const clip = e.clipboardData.getData('text').trim();
 		let words = clip.split(' ');
 		words.map((word, i) => {
-			wordRefs.current[i].current.value = word;
+			if (wordRefs.current[i]) wordRefs.current[i].current.value = word;
+			return null;
 		});
 	};
 
@@ -62,7 +63,7 @@ export default function RestoreMnemonic() {
 						<input
 							type="text"
 							ref={wordRefs.current[i]}
-							value={wordRefs.current[i].current ? wordRefs.current[i].current.value : ''}
+							//value={wordRefs.current[i].current ? wordRefs.current[i].current.value : ''}
 							onChange={e => {}}
 							className="form-control"
 							onPaste={handlePaste}
@@ -103,6 +104,10 @@ export default function RestoreMnemonic() {
 			words.push(word);
 		}
 		const mnemonic = words.join(' ');
+		if (!Wallet.isValidMnemonic(mnemonic)) {
+			Swal.fire('ERROR', 'Invalid mnemonic. Please check and try again', 'error');
+			return;
+		}
 		return restoreWallet(mnemonic);
 	};
 

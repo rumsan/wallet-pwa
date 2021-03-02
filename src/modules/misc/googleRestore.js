@@ -9,8 +9,7 @@ import { savePublickey, saveEncyptedWallet } from '../../utils/sessionManager';
 import { DB } from '../../constants';
 
 import { APP_CONSTANTS } from '../../constants';
-import GFolder from '../../utils/google/gfolder';
-import GFile from '../../utils/google/gfile';
+import { GFile, GFolder } from '../../utils/google';
 import Loading from '../global/Loading';
 
 const GDriveFolderName = 'RumsanWalletBackup';
@@ -27,6 +26,8 @@ export default function GoogleRestore() {
 	const [loading, setLoading] = useState(false);
 	const [passcode, setPasscode] = useState('');
 	const [encryptedWallet, setEncryptedWallet] = useState('');
+	const [walletList, setWalletList] = useState([]);
+	const [selectedWallet, setSelectedWallet] = useState('');
 	const [errorMsg, setErrorMsg] = useState('');
 	const [currentAction, setCurrentAction] = useState('verify_passcode');
 	const [fetchedDocs, setFetchedDocs] = useState([]);
@@ -71,8 +72,12 @@ export default function GoogleRestore() {
 		const gFile = new GFile(gapi);
 		const folder = await gFolder.ensureExists(GDriveFolderName);
 		const file = await gFile.getByName(BackupFileName, folder.id);
-		if (file.exists) {
-			let data = await gFile.downloadFile(file.firstFile.id);
+		let files = await gFile.listFiles(folder.id);
+		files = files.filter(f => ethers.utils.isAddress(f.name));
+		setWalletList(files);
+		if (files.length) {
+			console.log(files);
+			let data = await gFile.downloadFile(files[0].id);
 			const jsonData = JSON.parse(data);
 			if (jsonData.myDocuments && jsonData.myDocuments.length) setFetchedDocs(jsonData.myDocuments);
 			setEncryptedWallet(jsonData.wallet);
@@ -147,41 +152,59 @@ export default function GoogleRestore() {
 	return (
 		<div id="appCapsule">
 			<Loading message="Verifying your passcode. Please wait..." showModal={loading} />
-			{encryptedWallet && currentAction === 'verify_passcode' ? (
-				<div className="login-form" id="cmpUnlock" style={{ marginTop: 80 }}>
-					<div className="section">
-						<h1>Restore Wallet</h1>
-						<h4>Please enter your 6-digit old passcode</h4>
-					</div>
-					<div className="section mt-2 mb-5">
-						<div className="form-group boxed">
-							<div className="input-wrapper">
-								<input
-									onChange={handlePasscodeChange}
-									type="text"
-									pattern="[0-9]*"
-									inputMode="numeric"
-									className="form-control verify-input pwd"
-									name="passcode"
-									placeholder="------"
-									maxLength={6}
-									value={passcode}
-									style={{ color: 'green' }}
-								/>
-								<div className="text-center">
-									{errorMsg && <small className="text-danger message">{errorMsg}</small>}
+			<div id="cmpMain">
+				{encryptedWallet && currentAction === 'verify_passcode' ? (
+					<div className="login-form" id="cmpUnlock" style={{ marginTop: 80 }}>
+						<div className="section">
+							<h1>Restore Wallet</h1>
+							<h4>Please enter your 6-digit old passcode</h4>
+						</div>
+						<div className="section mt-2 mb-5">
+							<div className="form-group boxed">
+								<select
+									className="form-control custom-select"
+									value={selectedWallet}
+									onChange={e => setSelectedWallet(e.target.value)}
+									required
+								>
+									<option value="">Select a wallet to restore...</option>
+									{walletList.length &&
+										walletList.map(d => {
+											return (
+												<option key={d.id} value={d.id}>
+													{d.name}
+												</option>
+											);
+										})}
+								</select>
+								<div className="input-wrapper">
+									<input
+										onChange={handlePasscodeChange}
+										type="text"
+										pattern="[0-9]*"
+										inputMode="numeric"
+										className="form-control verify-input pwd"
+										name="passcode"
+										placeholder="------"
+										maxLength={6}
+										value={passcode}
+										style={{ color: 'green' }}
+									/>
+									<div className="text-center">
+										{errorMsg && <small className="text-danger message">{errorMsg}</small>}
+									</div>
 								</div>
 							</div>
 						</div>
 					</div>
-				</div>
-			) : (
-				<div className="text-center">
-					{!encryptedWallet && progressWidth < 10 && 'Initializing google restore...'}
-				</div>
-			)}
+				) : (
+					<div className="text-center">
+						{!encryptedWallet && progressWidth < 10 && 'Initializing google restore...'}
+					</div>
+				)}
 
-			<div id="cmpMain">
+				{currentAction === 'showSignIn' && <div></div>}
+
 				{currentAction === 'restore_wallet' && (
 					<div className="section full mt-2">
 						<div className="text-center" style={{ marginTop: 100 }}>
