@@ -14,8 +14,6 @@ import { getAbi, ethersWallet } from '../../utils/blockchain/abi';
 import { getTokenAssets, getCurrentNetwork } from '../../utils/sessionManager';
 
 const { CONTRACT_NAME, SCAN_DELAY } = APP_CONSTANTS;
-const currentNetwork = getCurrentNetwork();
-console.log({ currentNetwork });
 
 const previewStyle = {
 	height: 300,
@@ -42,6 +40,7 @@ export default function Index() {
 		ethBalance
 	} = useContext(AppContext);
 	let history = useHistory();
+	const currentNetwork = getCurrentNetwork();
 
 	const [sendAmount, setSendAmount] = useState('');
 	const [sendToAddress, setSendToAddress] = useState('');
@@ -244,7 +243,7 @@ export default function Index() {
 		scannedEthAddress && setSendToAddress(scannedEthAddress);
 		scannedAmount && setSendAmount(scannedAmount);
 
-		// if (!privateKey) history.push('/');
+		if (!privateKey) history.push('/');
 	}, [ethBalance, history, privateKey, scannedAmount, scannedEthAddress, sendingTokenName]);
 
 	return (

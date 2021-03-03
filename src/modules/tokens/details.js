@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import AppHeader from '../layouts/AppHeader';
 import EtherImg from '../../assets/images/ether.png';
 import { useHistory } from 'react-router-dom';
-import { getTokenAssets } from '../../utils/sessionManager';
+import { getTokenAssets, getCurrentNetwork } from '../../utils/sessionManager';
 import { DEFAULT_TOKEN } from '../../constants';
 
 import { AppContext } from '../../contexts/AppContext';
@@ -10,6 +10,7 @@ const tokens = getTokenAssets();
 const ETHER_NETWORK = 'ethereum';
 
 export default function Details(props) {
+	const currentNetwork = getCurrentNetwork();
 	let history = useHistory();
 	const { saveSendingTokenName, ethBalance } = useContext(AppContext);
 
@@ -52,7 +53,9 @@ export default function Details(props) {
 								</div>
 							</div>
 							<div className="cart-item-footer">
-								<div className="stepper stepper-sm stepper-secondary"></div>
+								<div className="stepper  stepper-secondary">
+									<span style={{ fontSize: '0.8rem' }}>{currentNetwork.display}</span>
+								</div>
 								<a
 									href="#send"
 									onClick={e => handleTransferClick(e)}
