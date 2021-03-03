@@ -13,6 +13,7 @@ module.exports = {
 	},
 	DEFAULT_TOKEN: {
 		NAME: 'Ether',
-		SYMBOL: 'ETH'
+		SYMBOL: 'ETH',
+		NETWORK: 'ethereum'
 	}
 };
