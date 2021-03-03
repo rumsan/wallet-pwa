@@ -9,7 +9,7 @@ import { getNetworkByName } from '../../constants/networks';
 export default function Index({ publicKey }) {
 	const [balance, setBalance] = useState(0);
 	const [blockchainNetwork, setBlockchainNetwork] = useState(null);
-	const { lockScreen } = useContext(AppContext);
+	const { lockScreen, saveEthBalance } = useContext(AppContext);
 
 	const fetchCurrentNetwork = () => {
 		let network = getCurrentNetwork();
@@ -26,6 +26,7 @@ export default function Index({ publicKey }) {
 			.getBalance(publicKey)
 			.then(balance => {
 				const myBalance = ethers.utils.formatEther(balance);
+				saveEthBalance(myBalance);
 				setBalance(myBalance);
 			})
 			.catch(err => {

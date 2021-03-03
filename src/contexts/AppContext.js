@@ -5,6 +5,7 @@ import { getNetworkByName } from '../constants/networks';
 import { saveCurrentNetwork, saveTokenAssets } from '../utils/sessionManager';
 
 const initialState = {
+	ethBalance: '',
 	sendingTokenName: '',
 	privateKey: null,
 	address: null, // Public Key
@@ -59,9 +60,14 @@ export const AppContextProvider = ({ children }) => {
 		dispatch({ type: APP_ACTIONS.SET_SENDING_TOKEN_NAME, data: symbol });
 	}
 
+	function saveEthBalance(balance) {
+		dispatch({ type: APP_ACTIONS.SET_ETH_BALANCE, data: balance });
+	}
+
 	return (
 		<AppContext.Provider
 			value={{
+				ethBalance: state.ethBalance,
 				address: state.address,
 				encryptedWallet: state.encryptedWallet,
 				lockScreen: state.lockScreen,
@@ -80,6 +86,7 @@ export const AppContextProvider = ({ children }) => {
 				saveAppWallet,
 				saveAppPasscode,
 				saveTokens,
+				saveEthBalance,
 				dispatch
 			}}
 		>

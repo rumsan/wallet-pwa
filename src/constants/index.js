@@ -10,5 +10,9 @@ module.exports = {
 		TABLES: {
 			DOCUMENTS: 'tbl_docs'
 		}
+	},
+	DEFAULT_TOKEN: {
+		NAME: 'Ether',
+		SYMBOL: 'ETH'
 	}
 };
