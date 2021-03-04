@@ -1,25 +1,12 @@
 import React, { useState, useContext } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import QrReader from 'react-qr-reader';
+import Swal from 'sweetalert2';
+
 import ModalWrapper from '../global/ModalWrapper';
 import { AppContext } from '../../contexts/AppContext';
 import { APP_CONSTANTS } from '../../constants';
-import Swal from 'sweetalert2';
-
-const previewStyle = {
-	height: 300,
-	width: 400,
-	display: 'flex',
-	justifyContent: 'center'
-};
-const camStyle = {
-	display: 'flex',
-	justifyContent: 'center',
-	marginTop: '-50px',
-	padding: '50px',
-	marginBottom: '25px'
-};
-const { SCAN_DELAY } = APP_CONSTANTS;
+const { SCAN_DELAY, SCANNER_PREVIEW_STYLE, SCANNER_CAM_STYLE } = APP_CONSTANTS;
 
 export default function UnlockedFooter() {
 	let history = useHistory();
@@ -33,18 +20,25 @@ export default function UnlockedFooter() {
 	};
 	const handlScanSuccess = data => {
 		if (data) {
-			//	let eth = data.includes('ethereum');
-			//	if (!eth) data = 'ethereum:' + data;
 			try {
+				const initials = data.substring(0, 2);
+				if (initials === '0x') {
+					saveScannedAddress({ address: data });
+					handleScanModalToggle();
+					history.push('/select-token');
+					return;
+				}
 				let properties = data.split(',');
 				let obj = {};
 				properties.forEach(function (property) {
 					let tup = property.split(':');
-					obj[tup[0]] = tup[1].trim();
+					const keyName = tup[0].trim();
+					const value = tup[1].trim();
+					obj[keyName] = value;
 				});
 				const tokenName = Object.getOwnPropertyNames(obj)[0];
 				obj.address = obj[tokenName];
-				saveTokenSymbolToCtx(tokenName);
+				saveTokenNameToCtx(tokenName);
 				saveScannedAddress(obj);
 				handleScanModalToggle();
 				history.push('/transfer');
@@ -56,7 +50,7 @@ export default function UnlockedFooter() {
 		}
 	};
 
-	const saveTokenSymbolToCtx = tokenName => {
+	const saveTokenNameToCtx = tokenName => {
 		if (tokenName === 'ethereum') saveSendingTokenName('ethereum');
 		else saveSendingTokenName(tokenName);
 	};
@@ -64,10 +58,10 @@ export default function UnlockedFooter() {
 	return (
 		<>
 			<ModalWrapper title="Scan a QR Code" showModal={scanModal} handleModal={handleScanModalToggle}>
-				<div style={camStyle}>
+				<div style={SCANNER_CAM_STYLE}>
 					<QrReader
 						delay={SCAN_DELAY}
-						style={previewStyle}
+						style={SCANNER_PREVIEW_STYLE}
 						onError={handleScanError}
 						onScan={handlScanSuccess}
 					/>

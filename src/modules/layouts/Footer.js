@@ -1,4 +1,6 @@
 import React, { useContext, useEffect } from 'react';
+import { useHistory } from 'react-router-dom';
+
 import { AppContext } from '../../contexts/AppContext';
 import LockedFooter from './LockedFooter';
 import UnlockedFooter from './UnlockedFooter';
@@ -20,7 +22,9 @@ const pubKey = getPublicKey();
 const { CONTRACT_NAME } = APP_CONSTANTS;
 
 export default function Footer() {
-	const { saveTokens, address, lockScreen } = useContext(AppContext);
+	let history = useHistory();
+
+	const { privateKey, saveTokens, address, lockScreen } = useContext(AppContext);
 	const myWallet = wallet ? wallet : address;
 
 	const refreshCurrentNetwork = () => {
@@ -30,6 +34,10 @@ export default function Footer() {
 	};
 
 	useEffect(() => {
+		if (!privateKey) {
+			history.push('/');
+			return;
+		}
 		async function fetchTokenDetails() {
 			const publicKey = address ? address : pubKey;
 			refreshCurrentNetwork();
@@ -53,7 +61,7 @@ export default function Footer() {
 		}
 
 		fetchTokenDetails();
-	}, [address, saveTokens]);
+	}, [address, history, privateKey, saveTokens]);
 
 	return (
 		<>

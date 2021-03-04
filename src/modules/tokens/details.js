@@ -6,11 +6,11 @@ import { getTokenAssets, getCurrentNetwork } from '../../utils/sessionManager';
 import { DEFAULT_TOKEN } from '../../constants';
 
 import { AppContext } from '../../contexts/AppContext';
-const tokens = getTokenAssets();
 const ETHER_NETWORK = 'ethereum';
 
 export default function Details(props) {
 	const currentNetwork = getCurrentNetwork();
+	const tokens = getTokenAssets();
 	let history = useHistory();
 	const { saveSendingTokenName, ethBalance } = useContext(AppContext);
 
