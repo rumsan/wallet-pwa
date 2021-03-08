@@ -7,9 +7,9 @@ import { AppContext } from '../../contexts/AppContext';
 import EtherImg from '../../assets/images/ether.png';
 import { DEFAULT_TOKEN } from '../../constants';
 
-export default function Index() {
+export default function SelectTokens() {
 	let history = useHistory();
-	const { ethBalance } = useContext(AppContext);
+	const { ethBalance, saveSendingTokenName } = useContext(AppContext);
 
 	const [tokenAssets, setTokenAssets] = useState([]);
 
@@ -20,21 +20,18 @@ export default function Index() {
 
 	const handleTokenClick = (e, symbol) => {
 		e.preventDefault();
-		history.push('/token/' + symbol);
-	};
-
-	const handleIconClick = e => {
-		e.preventDefault();
-		history.push('/import-token');
+		const _tokens = getTokenAssets();
+		const details = _tokens.find(item => item.symbol === symbol);
+		if (details) saveSendingTokenName(details.tokenName);
+		else saveSendingTokenName(DEFAULT_TOKEN.NETWORK);
+		history.push('/transfer');
 	};
 
 	return (
 		<div id="appCapsule">
-			<AppHeader handleIconClick={handleIconClick} iconName="add-outline" currentMenu="Assets" />
+			<AppHeader currentMenu="Select Token" />
 			<div className="card-body">
 				<div>
-					<div className="listview-title mt-2">Your Token Assets</div>
-
 					<ul className="listview image-listview">
 						<li key={DEFAULT_TOKEN.SYMBOL}>
 							<a href="#view" className="item" onClick={e => handleTokenClick(e, DEFAULT_TOKEN.SYMBOL)}>

@@ -12,21 +12,7 @@ import { AppContext } from '../../contexts/AppContext';
 import ModalWrapper from '../global/ModalWrapper';
 
 import { APP_CONSTANTS } from '../../constants';
-const { CONTRACT_NAME, SCAN_DELAY } = APP_CONSTANTS;
-
-const previewStyle = {
-	height: 300,
-	width: 400,
-	display: 'flex',
-	justifyContent: 'center'
-};
-const camStyle = {
-	display: 'flex',
-	justifyContent: 'center',
-	marginTop: '-50px',
-	padding: '50px',
-	marginBottom: '25px'
-};
+const { CONTRACT_NAME, SCAN_DELAY, SCANNER_PREVIEW_STYLE, SCANNER_CAM_STYLE } = APP_CONSTANTS;
 
 export default function ImportToken() {
 	const { address, saveTokens } = useContext(AppContext);
@@ -109,10 +95,10 @@ export default function ImportToken() {
 	return (
 		<>
 			<ModalWrapper title="Scan a QR Code" showModal={scanModal} handleModal={handleScanModalToggle}>
-				<div style={camStyle}>
+				<div style={SCANNER_CAM_STYLE}>
 					<QrReader
 						delay={SCAN_DELAY}
-						style={previewStyle}
+						style={SCANNER_PREVIEW_STYLE}
 						onError={handleScanError}
 						onScan={handlScanSuccess}
 					/>

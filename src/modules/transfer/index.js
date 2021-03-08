@@ -9,26 +9,11 @@ import Wallet from '../../utils/blockchain/wallet';
 import Loading from '../global/Loading';
 import AppHeader from '../layouts/AppHeader';
 import ModalWrapper from '../global/ModalWrapper';
-import { APP_CONSTANTS } from '../../constants';
+import { APP_CONSTANTS, DEFAULT_TOKEN } from '../../constants';
 import { getAbi, ethersWallet } from '../../utils/blockchain/abi';
-import { getTokenAssets } from '../../utils/sessionManager';
+import { getTokenAssets, getCurrentNetwork } from '../../utils/sessionManager';
 
-const { CONTRACT_NAME, SCAN_DELAY } = APP_CONSTANTS;
-const DEFAULT_TOKEN = '';
-
-const previewStyle = {
-	height: 300,
-	width: 400,
-	display: 'flex',
-	justifyContent: 'center'
-};
-const camStyle = {
-	display: 'flex',
-	justifyContent: 'center',
-	marginTop: '-50px',
-	padding: '50px',
-	marginBottom: '25px'
-};
+const { CONTRACT_NAME, SCAN_DELAY, SCANNER_PREVIEW_STYLE, SCANNER_CAM_STYLE } = APP_CONSTANTS;
 
 export default function Index() {
 	const {
@@ -37,16 +22,19 @@ export default function Index() {
 		scannedAmount,
 		scannedEthAddress,
 		saveSendingTokenName,
-		sendingTokenName
+		sendingTokenName,
+		ethBalance
 	} = useContext(AppContext);
 	let history = useHistory();
+	const currentNetwork = getCurrentNetwork();
 
 	const [sendAmount, setSendAmount] = useState('');
 	const [sendToAddress, setSendToAddress] = useState('');
 	const [loadingModal, setLoadingModal] = useState(false);
 	const [scanModal, setScanModal] = useState(false);
-	const [sendingToken, setSendingTokenSymbol] = useState(DEFAULT_TOKEN);
+	const [sendingToken, setSendingTokenSymbol] = useState('');
 	const [tokenAssets, setTokenAssets] = useState([]);
+	const [currentBalance, setCurrentBalance] = useState('');
 
 	const handleScanModalToggle = () => setScanModal(!scanModal);
 
@@ -56,6 +44,13 @@ export default function Index() {
 	const handlScanSuccess = data => {
 		if (data) {
 			try {
+				const initials = data.substring(0, 2);
+				if (initials === '0x') {
+					saveScannedAddress({ address: data });
+					handleScanModalToggle();
+					history.push('/select-token');
+					return;
+				}
 				let properties = data.split(',');
 				let obj = {};
 				properties.forEach(function (property) {
@@ -64,7 +59,7 @@ export default function Index() {
 				});
 				const tokenName = Object.getOwnPropertyNames(obj)[0];
 				obj.address = obj[tokenName];
-				saveTokenSymbolToCtx(tokenName);
+				saveTokenNameToCtx(tokenName);
 				saveScannedAddress(obj);
 				handleScanModalToggle();
 				history.push('/transfer');
@@ -75,7 +70,7 @@ export default function Index() {
 		}
 	};
 
-	const saveTokenSymbolToCtx = tokenName => {
+	const saveTokenNameToCtx = tokenName => {
 		if (tokenName === 'ethereum') saveSendingTokenName('ethereum');
 		else saveSendingTokenName(tokenName);
 	};
@@ -91,7 +86,7 @@ export default function Index() {
 	const resetFormStates = () => {
 		setLoadingModal(false);
 		setSendAmount('');
-		setSendingTokenSymbol(DEFAULT_TOKEN);
+		setSendingTokenSymbol('');
 		setSendToAddress('');
 	};
 
@@ -150,7 +145,7 @@ export default function Index() {
 			setLoadingModal(true);
 			setTimeout(async () => {
 				try {
-					if (sendingToken === 'ETH') await sendEther(data);
+					if (sendingToken === DEFAULT_TOKEN.SYMBOL) await sendEther(data);
 					else await sendERCToken();
 				} catch (e) {
 					Swal.fire('ERROR', e.error.message, 'error');
@@ -201,16 +196,11 @@ export default function Index() {
 	};
 
 	const handleSendClick = () => {
-		if (!sendingToken) return Swal.fire('ERROR', 'Please select token you want to transfer', 'error');
+		if (!sendingToken) return Swal.fire('ERROR', 'No token available to transfer', 'error');
 		if (!sendAmount || !sendToAddress) {
 			return Swal.fire({ title: 'ERROR', icon: 'error', text: 'Send amount and receiver address is required' });
 		}
 		confirmAndSend({ sendAmount, sendToAddress });
-	};
-
-	const handleChangeTokenSelect = e => {
-		const { value } = e.target;
-		setSendingTokenSymbol(value);
 	};
 
 	useEffect(() => {
@@ -221,9 +211,12 @@ export default function Index() {
 			const found = _tokens.find(item => item.tokenName === sendingTokenName);
 			if (found) {
 				setSendingTokenSymbol(found.symbol);
+				setCurrentBalance(found.tokenBalance);
 			} else {
-				if (sendingTokenName === 'ethereum') setSendingTokenSymbol('ETH');
-				else {
+				if (sendingTokenName === 'ethereum') {
+					setSendingTokenSymbol(DEFAULT_TOKEN.SYMBOL);
+					setCurrentBalance(ethBalance);
+				} else {
 					setSendingTokenSymbol('');
 					Swal.fire({
 						title: 'Asset not available',
@@ -242,19 +235,15 @@ export default function Index() {
 
 		scannedEthAddress && setSendToAddress(scannedEthAddress);
 		scannedAmount && setSendAmount(scannedAmount);
-
-		if (!privateKey) {
-			history.push('/');
-		}
-	}, [history, privateKey, scannedAmount, scannedEthAddress, sendingTokenName]);
+	}, [ethBalance, history, privateKey, scannedAmount, scannedEthAddress, sendingTokenName]);
 
 	return (
 		<>
 			<ModalWrapper title="Scan a QR Code" showModal={scanModal} handleModal={handleScanModalToggle}>
-				<div style={camStyle}>
+				<div style={SCANNER_CAM_STYLE}>
 					<QrReader
 						delay={SCAN_DELAY}
-						style={previewStyle}
+						style={SCANNER_PREVIEW_STYLE}
 						onError={handleScanError}
 						onScan={handlScanSuccess}
 					/>
@@ -265,48 +254,21 @@ export default function Index() {
 			<div id="appCapsule">
 				<div id="cmpMain">
 					<div className="section mt-2 mb-5">
+						<div className="wide-block pt-2 pb-2">
+							<div className="alert alert-primary mb-1" role="alert" style={{ fontSize: '1rem' }}>
+								Token Name :{' '}
+								<strong>
+									{sendingTokenName === 'ethereum' && 'Ether'} ({sendingToken})
+								</strong>{' '}
+								<br />
+								Current Balance : <strong>{currentBalance}</strong> <br />
+								Current Network : <strong>{currentNetwork.display}</strong>
+							</div>
+						</div>
+
 						<div className="card mt-5" id="cmpTransfer">
 							<div className="card-body">
 								<form>
-									<div className="form-group boxed" style={{ padding: 0 }}>
-										<div className="input-wrapper">
-											<label className="label" htmlFor="sendToAddr">
-												Select Token:
-											</label>
-											<div className="input-group mb-3">
-												<div className="form-group">
-													<select
-														className="form-control"
-														onChange={handleChangeTokenSelect}
-														name="selectToken"
-													>
-														<option value="">--Select Token--</option>
-														<option
-															selected={sendingToken === 'ETH' ? true : false}
-															value="ETH"
-														>
-															Ether (ETH)
-														</option>
-														{tokenAssets &&
-															tokenAssets.length > 0 &&
-															tokenAssets.map(item => {
-																return (
-																	<option
-																		key={item.symbol}
-																		value={item.symbol}
-																		selected={
-																			sendingToken === item.symbol ? true : false
-																		}
-																	>
-																		{item.tokenName} ({item.symbol})
-																	</option>
-																);
-															})}
-													</select>
-												</div>
-											</div>
-										</div>
-									</div>
 									<div className="form-group boxed" style={{ padding: 0 }}>
 										<div className="input-wrapper">
 											<label className="label" htmlFor="sendToAddr">

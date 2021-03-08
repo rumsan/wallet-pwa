@@ -7,6 +7,7 @@ import Header from '../layouts/Header';
 import ImportToken from '../tokens/importToken';
 import Main from './main';
 import NetworkSettings from '../settings/network';
+import SelectTokens from '../tokens/selectTokens';
 import Settings from '../settings';
 import Transfer from '../transfer';
 import Tokens from '../tokens';
@@ -22,6 +23,7 @@ function App() {
 				<Route exact path="/backup" component={BackupWallet} />
 				<Route exact path="/networks" component={NetworkSettings} />
 				<Route exact path="/import-token" component={ImportToken} />
+				<Route exact path="/select-token" component={SelectTokens} />
 				<Route exact path="/settings" component={Settings} />
 				<Route exact path="/tokens" component={Tokens} />
 				<Route exact path="/token/:symbol" component={TokenDetails} />
