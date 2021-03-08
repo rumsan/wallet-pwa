@@ -24,25 +24,24 @@ export default function GoogleRestore() {
 	const [progressMessage, setProgressMessage] = useState('Restoring wallet from google drive...');
 	const [progressWidth, setProgressWidth] = useState(0);
 	const [loading, setLoading] = useState(false);
+	const [gUser, setGUser] = useState({
+		id: null,
+		name: 'Loading User...',
+		email: null,
+		image: 'http://www.pngall.com/wp-content/uploads/5/Profile-PNG-Images.png'
+	});
 	const [passcode, setPasscode] = useState('');
 	const [encryptedWallet, setEncryptedWallet] = useState('');
 	const [walletList, setWalletList] = useState([]);
 	const [selectedWallet, setSelectedWallet] = useState('');
 	const [errorMsg, setErrorMsg] = useState('');
-	const [currentAction, setCurrentAction] = useState('verify_passcode');
+	const [currentAction, setCurrentAction] = useState('showSignIn');
 	const [fetchedDocs, setFetchedDocs] = useState([]);
 	const [dbContext, setDbContext] = useState(null);
 
 	const loadGapiClient = () => {
 		initDatabase();
 		gapi.load('client:auth2', initClient);
-	};
-
-	const updateSigninStatus = isSignedIn => {
-		let user = null;
-		if (isSignedIn) user = gapi.auth2.getAuthInstance().currentUser.je.Qt;
-		else user = handleUserSignIn();
-		if (user) return fetchWallet();
 	};
 
 	const initDatabase = () => {
@@ -61,10 +60,38 @@ export default function GoogleRestore() {
 		};
 	};
 
-	const restoreDocuments = async data => {
-		for (let doc of data) {
-			await dbContext.transaction([DB.TABLES.DOCUMENTS], 'readwrite').objectStore(DB.TABLES.DOCUMENTS).add(doc);
-		}
+	const initClient = () => {
+		gapi.client
+			.init({
+				clientId: CLIENT_ID,
+				discoveryDocs: DISCOVERY_DOCS,
+				ux_mode: 'redirect',
+				scope: 'profile email https://www.googleapis.com/auth/drive',
+				redirect_uri: `${GOOGLE_REDIRECT_URL}/restore`
+			})
+			.then(function () {
+				gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+				updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+			});
+	};
+
+	const updateSigninStatus = isSignedIn => {
+		let user = null;
+		if (isSignedIn) {
+			user = gapi.auth2.getAuthInstance().currentUser.get();
+			const profile = user.getBasicProfile();
+			setGUser({
+				id: profile.getId(),
+				name: profile.getName(),
+				email: profile.getEmail(),
+				image: profile.getImageUrl()
+			});
+		} else user = handleUserSignIn();
+		if (user) return fetchWallet();
+	};
+
+	const handleUserSignIn = () => {
+		return gapi.auth2.getAuthInstance().signIn();
 	};
 
 	const fetchWallet = async () => {
@@ -90,23 +117,10 @@ export default function GoogleRestore() {
 		}
 	};
 
-	const handleUserSignIn = () => {
-		return gapi.auth2.getAuthInstance().signIn();
-	};
-
-	const initClient = () => {
-		gapi.client
-			.init({
-				clientId: CLIENT_ID,
-				discoveryDocs: DISCOVERY_DOCS,
-				ux_mode: 'redirect',
-				scope: 'profile email https://www.googleapis.com/auth/drive',
-				redirect_uri: `${GOOGLE_REDIRECT_URL}/restore`
-			})
-			.then(function () {
-				gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
-				updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-			});
+	const restoreDocuments = async data => {
+		for (let doc of data) {
+			await dbContext.transaction([DB.TABLES.DOCUMENTS], 'readwrite').objectStore(DB.TABLES.DOCUMENTS).add(doc);
+		}
 	};
 
 	const handlePasscodeChange = e => {
@@ -203,7 +217,40 @@ export default function GoogleRestore() {
 					</div>
 				)}
 
-				{currentAction === 'showSignIn' && <div></div>}
+				{currentAction === 'showSignIn' && (
+					<div className="text-center m-5">
+						<div className="m-5">Backup will be restored from Google Drive belonging to this account.</div>
+						<div class="avatar">
+							<img src={gUser.image} alt="avatar" class="imaged w64 rounded" />
+						</div>
+						<div class="in mt-1">
+							<h3 class="name">{gUser.name}</h3>
+							<h5 class="subtext" style={{ margin: -3 }}>
+								{gUser.email}
+							</h5>
+						</div>
+						{gUser.id && (
+							<div className="row m-2">
+								<div className="col-md-4"></div>
+								<div className="col-md-2 mb-3">
+									<button
+										className="btn btn-sm btn-outline-secondary"
+										id="btnMnemonic"
+										onClick={e => handleUserSignIn()}
+									>
+										Switch User
+									</button>
+								</div>
+								<div className="col-md-2">
+									<button className="btn btn-primary" id="btnMnemonic" onClick="">
+										Continue Wallet Restore
+									</button>
+								</div>
+								<div className="col-md-4"></div>
+							</div>
+						)}
+					</div>
+				)}
 
 				{currentAction === 'restore_wallet' && (
 					<div className="section full mt-2">
