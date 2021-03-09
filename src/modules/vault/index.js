@@ -14,15 +14,17 @@ import { encryptData, decryptData } from '../../utils/crypto';
 import docImg from '../../assets/images/doc.png';
 
 const IPFS_VIEW_URL = 'http://127.0.0.1:8080/ipfs';
-const videoConstraints = {
-	facingMode: 'user'
-};
 
 export default function Index() {
 	const [cameraModal, setCameraModal] = useState(false);
 	const [previewImage, setPreviewImage] = useState('');
 	const [imageViewModal, setImageViewModal] = useState(false);
 	const [currentDocument, setCurrentDocument] = useState('');
+	const [videoConstraints, setVideoConstraints] = useState({
+		width: 1080,
+		height: 500,
+		facingMode: 'environment'
+	});
 
 	const [dbContext, setDbContext] = useState(null);
 	const [myDocuments, setMyDocuments] = useState([]);
@@ -52,6 +54,12 @@ export default function Index() {
 				Swal.fire('ERROR', 'Document upload failed', 'error');
 				setPreviewImage('');
 			});
+	};
+
+	const handleFaceChange = () => {
+		const { facingMode } = videoConstraints;
+		const face = facingMode === 'environment' ? 'user' : 'environment';
+		setVideoConstraints({ ...videoConstraints, facingMode: face });
 	};
 
 	const capture = () => {
@@ -154,33 +162,37 @@ export default function Index() {
 					</div>
 				</div>
 			</ImageViewer>
-			<ModalWrapper modalSize="lg" title="Take a picture" showModal={cameraModal} handleModal={toggleCameraModal}>
-				<div style={{ padding: 10 }}>
-					<Webcam
-						audio={false}
-						height={400}
-						ref={webcamRef}
-						screenshotFormat="image/jpeg"
-						width="100%"
-						videoConstraints={videoConstraints}
-					/>
-					<div className="text-center">
-						<button className="btn btn-primary" onClick={capture}>
-							Capture photo
-						</button>
-					</div>
+			<ModalWrapper modalSize="lg" title="" showModal={cameraModal} handleModal={toggleCameraModal}>
+				<Webcam
+					minScreenshotHeight={300}
+					minScreenshotWidth={400}
+					audio={false}
+					height={videoConstraints.height}
+					ref={webcamRef}
+					screenshotFormat="image/jpeg"
+					width="100%"
+					videoConstraints={videoConstraints}
+				/>
+				<div className="text-center">
+					<button type="button" className="btn btn-text-primary rounded shadowed mr-1 mb-1" onClick={capture}>
+						&nbsp; &nbsp;<ion-icon name="camera-outline"></ion-icon>
+					</button>
+					&nbsp;
+					<button
+						type="button"
+						className="btn btn-text-primary rounded shadowed mr-1 mb-1"
+						onClick={handleFaceChange}
+					>
+						&nbsp; &nbsp; <ion-icon name="camera-reverse-outline"></ion-icon>
+					</button>
 				</div>
 			</ModalWrapper>
 			<AppHeader currentMenu="Vault" />
 			<div id="appCapsule">
 				<div className="container">
 					<div className="section full mt-2">
-						<div className="section-title" style={{ fontSize: 'larger' }}>
-							My documents
-						</div>
 						<form>
 							<div className="content-header mb-05">
-								<p>Manage your documents</p>
 								<div className="row" style={{ marginBottom: 30 }}>
 									{myDocuments.length > 0 &&
 										myDocuments.map(doc => {

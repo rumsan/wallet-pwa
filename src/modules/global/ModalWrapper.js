@@ -7,9 +7,12 @@ export default function ModalWrapper(props) {
 	return (
 		<>
 			<Modal size={modalSize || 'md'} show={showModal || false} onHide={handleModal}>
-				<Modal.Header>
-					<Modal.Title style={{ fontSize: 14 }}>{title || 'My Modal'}</Modal.Title>
-				</Modal.Header>
+				{title && (
+					<Modal.Header>
+						<Modal.Title style={{ fontSize: 14 }}>{title}</Modal.Title>
+					</Modal.Header>
+				)}
+
 				<Modal.Body>{props.children}</Modal.Body>
 				{props.showFooter && (
 					<Modal.Footer>
