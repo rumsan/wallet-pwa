@@ -34,10 +34,10 @@ export default function Footer() {
 	};
 
 	useEffect(() => {
-		// if (!privateKey) {
-		// 	history.push('/');
-		// 	return;
-		// }
+		if (!privateKey) {
+			history.push('/');
+			return;
+		}
 		async function fetchTokenDetails() {
 			const publicKey = address ? address : pubKey;
 			refreshCurrentNetwork();

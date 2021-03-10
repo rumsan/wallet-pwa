@@ -1,37 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import Webcam from 'react-webcam';
 import Swal from 'sweetalert2';
-import { v4 as uuidv4 } from 'uuid';
 
 import AppHeader from '../layouts/AppHeader';
 import ModalWrapper from '../../modules/global/ModalWrapper';
 import ActionButton from './actionButton';
 import ImageViewer from '../../modules/global/ImageViewer';
 
-import { uploadToIpfs, dataURLtoFile } from '../../utils';
+import { uploadToIpfs, dataURLtoFile, base64ToBlob, blobToBase64 } from '../../utils';
 import { DB } from '../../constants';
-import { encryptData, decryptData } from '../../utils/crypto';
 import docImg from '../../assets/images/doc.png';
 
-const IPFS_VIEW_URL = 'http://127.0.0.1:8080/ipfs';
+// const IPFS_VIEW_URL = 'http://127.0.0.1:8080/ipfs';
 
 export default function Index() {
 	const [cameraModal, setCameraModal] = useState(false);
 	const [previewImage, setPreviewImage] = useState('');
 	const [imageViewModal, setImageViewModal] = useState(false);
-	const [currentDocument, setCurrentDocument] = useState('');
+	const [currentDocument, setCurrentDocument] = useState(''); // Viewing current document file base64 url
+	const [currentDocumentName, setCurrentDocumentName] = useState(''); // Viewng current document name
 	const [videoConstraints, setVideoConstraints] = useState({
 		width: 1080,
 		height: 500,
 		facingMode: 'environment'
 	});
+	const [imagePreviewModal, setImagePreviewModal] = useState(false);
+	const [documentName, setDocumentName] = useState('');
+	const [blobFile, setBlobFile] = useState('');
 
 	const [dbContext, setDbContext] = useState(null);
 	const [myDocuments, setMyDocuments] = useState([]);
 
-	const toggleImageViewModal = (e, docName) => {
+	const handleDocumentNameChange = e => {
+		setDocumentName(e.target.value);
+	};
+
+	const toggleImageViewModal = (e, base64Url, docName) => {
 		if (e) e.preventDefault();
-		setCurrentDocument(docName);
+		setCurrentDocumentName(docName);
+		setCurrentDocument(base64Url);
 		setImageViewModal(!imageViewModal);
 	};
 
@@ -39,20 +46,28 @@ export default function Index() {
 		setCameraModal(!cameraModal);
 	};
 
+	const toggleImagePreviewModal = () => {
+		setDocumentName('');
+		setImagePreviewModal(!imagePreviewModal);
+	};
+
 	const webcamRef = React.useRef(null);
 
-	const handleUploadClick = () => {
+	const handleDocumentSubmit = e => {
+		e.preventDefault();
 		const file = dataURLtoFile(previewImage);
 		uploadToIpfs(file)
 			.then(res => {
-				let encryptedHash = encryptData(res.path);
-				saveDocument(encryptedHash);
+				saveDocument(res.path);
+				toggleImagePreviewModal();
 				Swal.fire('SUCCESS', 'Document uploaded successfully', 'success');
 				setPreviewImage('');
+				setDocumentName('');
 			})
 			.catch(err => {
 				Swal.fire('ERROR', 'Document upload failed', 'error');
 				setPreviewImage('');
+				setDocumentName('');
 			});
 	};
 
@@ -62,10 +77,24 @@ export default function Index() {
 		setVideoConstraints({ ...videoConstraints, facingMode: face });
 	};
 
+	const handleCaptureAgain = e => {
+		e.preventDefault();
+		toggleImagePreviewModal();
+		toggleCameraModal();
+	};
+
 	const capture = () => {
 		const imageSrc = webcamRef.current.getScreenshot();
-		setPreviewImage(imageSrc);
-		toggleCameraModal();
+		base64ToBlob(imageSrc)
+			.then(blob => {
+				setBlobFile(blob);
+				setPreviewImage(imageSrc);
+				toggleCameraModal();
+				toggleImagePreviewModal();
+			})
+			.catch(err => {
+				Swal.fire('ERROR', 'Image capture failed', 'error');
+			});
 	};
 
 	const initDatabase = () => {
@@ -85,10 +114,11 @@ export default function Index() {
 		};
 	};
 
-	const saveDocument = file => {
+	const saveDocument = docId => {
 		let payload = {
-			docId: uuidv4(),
-			docName: file,
+			docId: docId,
+			docName: documentName,
+			file: blobFile,
 			createdAt: Date.now()
 		};
 		const request = dbContext
@@ -110,10 +140,13 @@ export default function Index() {
 		objectStore.openCursor().onsuccess = function (e) {
 			let cursor = e.target.result;
 			if (cursor) {
-				const { docId, docName } = cursor.value;
-				const decryptedHash = decryptData(docName);
-				let doc = { docId, docName: decryptedHash };
-				myDocs.push(doc);
+				const { docId, docName, file } = cursor.value;
+				if (file) {
+					blobToBase64(file).then(d => {
+						let doc = { docId, docName, file: d };
+						myDocs.push(doc);
+					});
+				}
 				cursor.continue();
 			}
 			setTimeout(() => {
@@ -124,11 +157,10 @@ export default function Index() {
 
 	const handleDownloadClick = e => {
 		e.preventDefault();
-		const url = `${IPFS_VIEW_URL}/${currentDocument}`;
-		return downloadFile(url, currentDocument);
+		return downloadFile(currentDocument);
 	};
 
-	function downloadFile(url, fileName) {
+	function downloadFile(url) {
 		var xhr = new XMLHttpRequest();
 		xhr.open('GET', url, true);
 		xhr.responseType = 'blob';
@@ -137,7 +169,7 @@ export default function Index() {
 			var imageUrl = urlCreator.createObjectURL(this.response);
 			var tag = document.createElement('a');
 			tag.href = imageUrl;
-			tag.download = fileName;
+			tag.download = currentDocumentName;
 			document.body.appendChild(tag);
 			tag.click();
 			document.body.removeChild(tag);
@@ -153,19 +185,64 @@ export default function Index() {
 				handleDownloadClick={handleDownloadClick}
 				showModal={imageViewModal}
 				handleModal={toggleImageViewModal}
+				documentName={currentDocumentName}
 			>
 				<div role="document">
 					<div className="modal-content">
 						<div className="story-image">
-							<img width="100%" src={`${IPFS_VIEW_URL}/${currentDocument}`} alt="My document" />
+							<img width="100%" src={currentDocument} alt="My document" />
 						</div>
 					</div>
 				</div>
 			</ImageViewer>
+			<ModalWrapper modalSize="lg" title="" showModal={imagePreviewModal} handleModal={toggleImagePreviewModal}>
+				<img
+					style={{ minHeight: 350, maxHeight: 450 }}
+					className="card-img-top"
+					src={previewImage ? previewImage : docImg}
+					alt="My doc"
+				/>
+				<div className="section mt-4 mb-5">
+					<form onSubmit={e => handleDocumentSubmit(e)}>
+						<div className="form-group basic">
+							<div className="input-wrapper">
+								<label className="label" htmlFor="documentName">
+									Document Name
+								</label>
+								<input
+									type="text"
+									className="form-control"
+									name="documentName"
+									id="documentName"
+									onChange={handleDocumentNameChange}
+									value={documentName}
+									placeholder="Enter short document name"
+									required
+								/>
+								<i className="clear-input">
+									<ion-icon name="close-circle" />
+								</i>
+							</div>
+						</div>
+
+						<div className="form-links mt-2">
+							<div>
+								<a href="#capture" onClick={e => handleCaptureAgain(e)}>
+									Capture another?
+								</a>
+							</div>
+						</div>
+
+						<div className="mt-2">
+							<button type="submit" className="btn btn-primary btn-block btn-lg">
+								Save
+							</button>
+						</div>
+					</form>
+				</div>
+			</ModalWrapper>
 			<ModalWrapper modalSize="lg" title="" showModal={cameraModal} handleModal={toggleCameraModal}>
 				<Webcam
-					minScreenshotHeight={300}
-					minScreenshotWidth={400}
 					audio={false}
 					height={videoConstraints.height}
 					ref={webcamRef}
@@ -200,11 +277,11 @@ export default function Index() {
 												<div key={doc.docId} className="col-sm-3" style={{ marginTop: 15 }}>
 													<div
 														className="card"
-														onClick={e => toggleImageViewModal(e, doc.docName)}
+														onClick={e => toggleImageViewModal(e, doc.file, doc.docName)}
 													>
 														<img
 															className="card-img-top"
-															src={`${IPFS_VIEW_URL}/${doc.docName}`}
+															src={doc.file}
 															alt="My doc"
 															height="282"
 														/>
@@ -212,21 +289,12 @@ export default function Index() {
 												</div>
 											);
 										})}
-									{previewImage ? (
-										<ActionButton
-											btnText="Upload Now"
-											imageUrl={previewImage}
-											handleClick={handleUploadClick}
-											iconName="cloud-upload-outline"
-										/>
-									) : (
-										<ActionButton
-											btnText="Take a picture to upload"
-											imageUrl={docImg}
-											handleClick={toggleCameraModal}
-											iconName="add-outline"
-										/>
-									)}
+									<ActionButton
+										btnText="Take a picture to upload"
+										imageUrl={docImg}
+										handleClick={toggleCameraModal}
+										iconName="add-outline"
+									/>
 								</div>
 							</div>
 						</form>

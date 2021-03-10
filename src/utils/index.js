@@ -41,3 +41,24 @@ export function dataURLtoFile(dataurl, filename = 'my_doc') {
 export function arraysAreEqual(ary1, ary2) {
 	return ary1.join('') === ary2.join('');
 }
+
+export function base64ToBlob(base64Url) {
+	return new Promise((resolve, reject) => {
+		fetch(base64Url)
+			.then(res => {
+				const result = res.blob();
+				resolve(result);
+			})
+			.catch(err => reject(err));
+	});
+}
+
+export const blobToBase64 = blob => {
+	const reader = new FileReader();
+	reader.readAsDataURL(blob);
+	return new Promise(resolve => {
+		reader.onloadend = () => {
+			resolve(reader.result);
+		};
+	});
+};
