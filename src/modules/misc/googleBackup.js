@@ -6,10 +6,9 @@ import Swal from 'sweetalert2';
 import GFolder from '../../utils/google/gfolder';
 import GFile from '../../utils/google/gfile';
 import { getEncryptedWallet, saveBackupDocs, getBackupDocs, clearBackupDocs } from '../../utils/sessionManager';
-import { DB } from '../../constants';
+import { DB, BACKUP } from '../../constants';
 
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
-const GDriveFolderName = 'RumsanWalletBackup';
 const GOOGLE_REDIRECT_URL = process.env.REACT_APP_GOOGLE_REDIRECT_URL;
 const CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
@@ -47,43 +46,35 @@ export default function GoogleBackup() {
 			const backupData = { name: 'rumsan-wallet', wallet: encWallet, type: 'ethereum' };
 
 			setProgressWidth(25);
-			const folder = await gFolder.ensureExists(GDriveFolderName);
+			const folder = await gFolder.ensureExists(BACKUP.GDRIVE_FOLDERNAME);
 			setProgressMessage('Checking if previous backup exists...');
 			const file = await gFile.getByName(encWallet.address, folder.id);
 			setProgressWidth(50);
+
 			// if (file.exists) {
 			// 	setProgressWidth(100);
 			// 	setProgressMessage('Backup already exists in Google Drive.');
 			// 	setShowHomeButton(true);
 			// 	setLoading(false);
 			// } else {
-
+			// 	setProgressMessage('Previous backup not found. Fetching new wallet....');
+			// 	setProgressWidth(60);
+			// 	const encWallet = getEncryptedWallet();
+			// 	if (!encWallet) throw new Error('No wallet available to backup!');
+			// 	const backupData = { wallet: JSON.parse(encWallet) };
+			// 	if (backupDocs && backupDocs.length) backupData.myDocuments = backupDocs;
+			// 	setProgressWidth(80);
+			// 	setProgressMessage('Backing up encrypted wallet to Google Drive...');
+			// 	await gFile.createFile({
+			// 		name: encWallet.address,
+			// 		data: JSON.stringify(backupData),
+			// 		parentId: folder.id
+			// 	});
+			// 	setLoading(false);
+			// 	setProgressMessage('Wallet backed up successfully.');
+			// 	setShowHomeButton(true);
+			// 	setProgressWidth(100);
 			// }
-
-			if (file.exists) {
-				setProgressWidth(100);
-				setProgressMessage('Backup already exists in Google Drive.');
-				setShowHomeButton(true);
-				setLoading(false);
-			} else {
-				setProgressMessage('Previous backup not found. Fetching new wallet....');
-				setProgressWidth(60);
-				const encWallet = getEncryptedWallet();
-				if (!encWallet) throw new Error('No wallet available to backup!');
-				const backupData = { wallet: JSON.parse(encWallet) };
-				if (backupDocs && backupDocs.length) backupData.myDocuments = backupDocs;
-				setProgressWidth(80);
-				setProgressMessage('Backing up encrypted wallet to Google Drive...');
-				await gFile.createFile({
-					name: encWallet.address,
-					data: JSON.stringify(backupData),
-					parentId: folder.id
-				});
-				setLoading(false);
-				setProgressMessage('Wallet backed up successfully.');
-				setShowHomeButton(true);
-				setProgressWidth(100);
-			}
 
 			setProgressMessage('Previous backup not found. Fetching new wallet....');
 			setProgressWidth(60);
@@ -95,6 +86,7 @@ export default function GoogleBackup() {
 				data: JSON.stringify(backupData),
 				parentId: folder.id
 			});
+			if (file.exists) await gFile.deleteFile(file.firstFile.id);
 			setLoading(false);
 			setProgressMessage('Wallet backed up successfully.');
 			setShowHomeButton(true);

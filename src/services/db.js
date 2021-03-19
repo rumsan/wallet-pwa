@@ -51,6 +51,10 @@ export default {
 		return documentStore.get(hash);
 	},
 
+	listDocuments() {
+		return store.list();
+	},
+
 	async saveAssets(assets) {
 		if (!Array.isArray(assets)) assets = [assets];
 		for (let asset of assets) {

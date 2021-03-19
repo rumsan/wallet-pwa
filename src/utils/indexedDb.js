@@ -47,6 +47,37 @@ export default class {
 		});
 	}
 
+	list(withKeys = false) {
+		let me = this;
+		return new Promise((resolve, reject) => {
+			let oRequest = window.indexedDB.open(me.name, me.version);
+			oRequest.onsuccess = function () {
+				let db = oRequest.result;
+				let tx = db.transaction(me.table, 'readonly');
+				let st = tx.objectStore(me.table);
+
+				let cursorRequest = st.openCursor();
+				cursorRequest.onerror = function (error) {
+					reject(error);
+				};
+
+				let items = [];
+				cursorRequest.onsuccess = function (evt) {
+					let cursor = evt.target.result;
+					if (cursor) {
+						if (withKeys) items.push({ key: cursor.key, value: cursor.value });
+						else items.push(cursor.value);
+						cursor.continue();
+					}
+					resolve(items);
+				};
+			};
+			oRequest.onerror = function () {
+				reject(oRequest.error);
+			};
+		});
+	}
+
 	set(value, key) {
 		let me = this;
 		return new Promise((resolve, reject) => {
