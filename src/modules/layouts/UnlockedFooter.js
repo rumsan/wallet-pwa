@@ -55,7 +55,6 @@ export default function UnlockedFooter() {
 			const isJsonStr = isJsonString(data);
 			if (isJsonStr === true) {
 				loginPayload = JSON.parse(data);
-				console.log('log', loginPayload);
 				if (loginPayload && loginPayload.action === 'login') return handleQRLogin(loginPayload);
 			} else {
 				try {
