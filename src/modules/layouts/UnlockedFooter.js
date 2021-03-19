@@ -2,50 +2,89 @@ import React, { useState, useContext } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import QrReader from 'react-qr-reader';
 import Swal from 'sweetalert2';
+import axios from 'axios';
 
 import ModalWrapper from '../global/ModalWrapper';
 import { AppContext } from '../../contexts/AppContext';
 import { APP_CONSTANTS } from '../../constants';
+import Wallet from '../../utils/blockchain/wallet';
+
 const { SCAN_DELAY, SCANNER_PREVIEW_STYLE, SCANNER_CAM_STYLE } = APP_CONSTANTS;
+const WALLET_LOGIN_SERVER = process.env.REACT_APP_LOGIN_SERVER;
 
 export default function UnlockedFooter() {
 	let history = useHistory();
-	const { saveScannedAddress, saveSendingTokenName } = useContext(AppContext);
+	const { saveScannedAddress, saveSendingTokenName, privateKey } = useContext(AppContext);
 	const [scanModal, setScanModal] = useState(false);
 
 	const handleScanModalToggle = () => setScanModal(!scanModal);
 
+	const handleQRLogin = async payload => {
+		try {
+			const w = new Wallet({});
+			const wallet = await w.loadFromPrivateKey(privateKey);
+			const signedData = await wallet.signMessage(payload.token);
+			const { data } = await axios.post(`${WALLET_LOGIN_SERVER}/api/v1/auth/wallet`, {
+				id: payload.id,
+				signature: signedData
+			});
+			if (data) {
+				handleScanModalToggle();
+				Swal.fire('SUCCESS', 'Logged in successfully!', 'success');
+			}
+		} catch (err) {
+			Swal.fire('ERROR', 'Login using wallet failed!', 'error');
+		}
+	};
+
 	const handleScanError = err => {
 		alert('Oops, scanning failed. Please try again');
 	};
+
+	const isJsonString = str => {
+		try {
+			JSON.parse(str);
+		} catch (e) {
+			return false;
+		}
+		return true;
+	};
+
 	const handlScanSuccess = data => {
+		let loginPayload = null;
 		if (data) {
-			try {
-				const initials = data.substring(0, 2);
-				if (initials === '0x') {
-					saveScannedAddress({ address: data });
+			const isJsonStr = isJsonString(data);
+			if (isJsonStr === true) {
+				loginPayload = JSON.parse(data);
+				if (loginPayload && loginPayload.action === 'login') return handleQRLogin(loginPayload);
+			} else {
+				try {
+					const initials = data.substring(0, 2);
+					if (initials === '0x') {
+						saveScannedAddress({ address: data });
+						handleScanModalToggle();
+						history.push('/select-token');
+						return;
+					}
+					let properties = data.split(',');
+					let obj = {};
+					properties.forEach(function (property) {
+						let tup = property.split(':');
+						const keyName = tup[0].trim();
+						const value = tup[1].trim();
+						obj[keyName] = value;
+					});
+					const tokenName = Object.getOwnPropertyNames(obj)[0];
+					obj.address = obj[tokenName];
+					saveTokenNameToCtx(tokenName);
+					saveScannedAddress(obj);
 					handleScanModalToggle();
-					history.push('/select-token');
-					return;
+					history.push('/transfer');
+				} catch (err) {
+					console.log('ERR:', err);
+					handleScanModalToggle();
+					Swal.fire('ERROR', 'Invalid wallet address!', 'error');
 				}
-				let properties = data.split(',');
-				let obj = {};
-				properties.forEach(function (property) {
-					let tup = property.split(':');
-					const keyName = tup[0].trim();
-					const value = tup[1].trim();
-					obj[keyName] = value;
-				});
-				const tokenName = Object.getOwnPropertyNames(obj)[0];
-				obj.address = obj[tokenName];
-				saveTokenNameToCtx(tokenName);
-				saveScannedAddress(obj);
-				handleScanModalToggle();
-				history.push('/transfer');
-			} catch (err) {
-				console.log('ERR:', err);
-				handleScanModalToggle();
-				Swal.fire('ERROR', 'Invalid wallet address!', 'error');
 			}
 		}
 	};

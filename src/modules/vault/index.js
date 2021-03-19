@@ -177,11 +177,16 @@ export default function Index() {
 		xhr.send();
 	}
 
+	const handleRemoveDocClick = () => {
+		console.log('HELLO');
+	};
+
 	useEffect(initDatabase, []);
 
 	return (
 		<>
 			<ImageViewer
+				handleRemoveDocClick={handleRemoveDocClick}
 				handleDownloadClick={handleDownloadClick}
 				showModal={imageViewModal}
 				handleModal={toggleImageViewModal}
@@ -280,6 +285,7 @@ export default function Index() {
 														onClick={e => toggleImageViewModal(e, doc.file, doc.docName)}
 													>
 														<img
+															style={{ borderRadius: '6px' }}
 															className="card-img-top"
 															src={doc.file}
 															alt="My doc"
