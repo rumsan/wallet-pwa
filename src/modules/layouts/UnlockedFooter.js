@@ -10,7 +10,6 @@ import { APP_CONSTANTS } from '../../constants';
 import Wallet from '../../utils/blockchain/wallet';
 
 const { SCAN_DELAY, SCANNER_PREVIEW_STYLE, SCANNER_CAM_STYLE } = APP_CONSTANTS;
-const WALLET_LOGIN_SERVER = process.env.REACT_APP_LOGIN_SERVER;
 
 export default function UnlockedFooter() {
 	let history = useHistory();
@@ -24,7 +23,7 @@ export default function UnlockedFooter() {
 			const w = new Wallet({});
 			const wallet = await w.loadFromPrivateKey(privateKey);
 			const signedData = await wallet.signMessage(payload.token);
-			const { data } = await axios.post(`${WALLET_LOGIN_SERVER}/api/v1/auth/wallet`, {
+			const { data } = await axios.post(payload.callbackUrl, {
 				id: payload.id,
 				signature: signedData
 			});
@@ -56,6 +55,7 @@ export default function UnlockedFooter() {
 			const isJsonStr = isJsonString(data);
 			if (isJsonStr === true) {
 				loginPayload = JSON.parse(data);
+				console.log('log', loginPayload);
 				if (loginPayload && loginPayload.action === 'login') return handleQRLogin(loginPayload);
 			} else {
 				try {
