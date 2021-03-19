@@ -13,7 +13,7 @@ export default function SetupButton({ handleGoogleRestoreClick, togglePasscodeMo
 							className="btn btn-block btn-linkedin mb-2"
 						>
 							<ion-icon name="wallet-outline" className="md hydrated" aria-label="Create New Wallet" />
-							Setup My Wallet
+							Create new wallet
 						</button>
 					</div>
 
@@ -29,7 +29,7 @@ export default function SetupButton({ handleGoogleRestoreClick, togglePasscodeMo
 								className="md hydrated"
 								aria-label="Restore Existing Wallet"
 							/>
-							Restore Using Mnemonic
+							Restore wallet from seed phrase (mnemonic)
 						</button>
 					</div>
 
@@ -41,7 +41,7 @@ export default function SetupButton({ handleGoogleRestoreClick, togglePasscodeMo
 							className="btn btn-block btn-success mb-2"
 						>
 							<ion-icon name="logo-google" className="md hydrated" aria-label="Restore Using Google" />
-							Restore Using Google
+							Restore wallet from Google Drive
 						</button>
 					</div>
 				</div>

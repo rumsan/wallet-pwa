@@ -17,10 +17,15 @@ module.exports = {
 			marginBottom: '25px'
 		}
 	},
+	BACKUP: {
+		GDRIVE_FOLDERNAME: 'RumsanWalletBackups'
+	},
 	DB: {
 		NAME: 'db_wallet',
 		VERSION: 1,
 		TABLES: {
+			DATA: 'tbl_data',
+			ASSETS: 'tbl_assets',
 			DOCUMENTS: 'tbl_docs'
 		}
 	},

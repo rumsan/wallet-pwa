@@ -10,7 +10,6 @@ import { DB } from '../../constants';
 
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 const GDriveFolderName = 'RumsanWalletBackup';
-const BackupFileName = 'rumsan.wallet';
 const GOOGLE_REDIRECT_URL = process.env.REACT_APP_GOOGLE_REDIRECT_URL;
 const CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
@@ -43,11 +42,24 @@ export default function GoogleBackup() {
 			setLoading(true);
 			const gFolder = new GFolder(gapi);
 			const gFile = new GFile(gapi);
+			let encWallet = getEncryptedWallet();
+			encWallet = JSON.parse(encWallet);
+			const backupData = { name: 'rumsan-wallet', wallet: encWallet, type: 'ethereum' };
+
 			setProgressWidth(25);
 			const folder = await gFolder.ensureExists(GDriveFolderName);
 			setProgressMessage('Checking if previous backup exists...');
-			const file = await gFile.getByName(BackupFileName, folder.id);
+			const file = await gFile.getByName(encWallet.address, folder.id);
 			setProgressWidth(50);
+			// if (file.exists) {
+			// 	setProgressWidth(100);
+			// 	setProgressMessage('Backup already exists in Google Drive.');
+			// 	setShowHomeButton(true);
+			// 	setLoading(false);
+			// } else {
+
+			// }
+
 			if (file.exists) {
 				setProgressWidth(100);
 				setProgressMessage('Backup already exists in Google Drive.');
@@ -62,12 +74,31 @@ export default function GoogleBackup() {
 				if (backupDocs && backupDocs.length) backupData.myDocuments = backupDocs;
 				setProgressWidth(80);
 				setProgressMessage('Backing up encrypted wallet to Google Drive...');
-				await gFile.createFile({ name: BackupFileName, data: JSON.stringify(backupData), parentId: folder.id });
+				await gFile.createFile({
+					name: encWallet.address,
+					data: JSON.stringify(backupData),
+					parentId: folder.id
+				});
 				setLoading(false);
 				setProgressMessage('Wallet backed up successfully.');
 				setShowHomeButton(true);
 				setProgressWidth(100);
 			}
+
+			setProgressMessage('Previous backup not found. Fetching new wallet....');
+			setProgressWidth(60);
+			if (!encWallet) throw new Error('No wallet available to backup!');
+			setProgressWidth(80);
+			setProgressMessage('Backing up encrypted wallet to Google Drive...');
+			await gFile.createFile({
+				name: encWallet.address,
+				data: JSON.stringify(backupData),
+				parentId: folder.id
+			});
+			setLoading(false);
+			setProgressMessage('Wallet backed up successfully.');
+			setShowHomeButton(true);
+			setProgressWidth(100);
 		} catch (e) {
 			Swal.fire('ERROR', e.message, 'error');
 		} finally {

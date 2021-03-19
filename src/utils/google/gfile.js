@@ -14,7 +14,7 @@ export default class {
 	 * returns an array of file descriptions:
 	 * [{driveId, driveVersion, name, ifid}]
 	 */
-	listFiles() {
+	listFiles(parentId) {
 		function formatResult(response) {
 			const stories = [];
 			for (let i = 0; i < response.files.length; i++) {
@@ -24,12 +24,15 @@ export default class {
 			return stories;
 		}
 
+		let q = 'trashed=false';
+		if (parentId) q = `'${parentId}' in parents and trashed=false`;
+
 		return new Promise((resolve, reject) => {
 			this.gapi.client.drive.files
 				.list({
 					pageSize: 300,
 					fields: `files(${fileFields})`,
-					q: 'trashed=false'
+					q
 				})
 				.execute(response => resolve(formatResult(response)));
 		});

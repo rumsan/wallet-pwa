@@ -4,9 +4,12 @@ import { getCurrentNetwork, logout, getEncryptedWallet } from '../sessionManager
 import { getNetworkByName } from '../../constants/networks';
 
 export default class {
+	static isValidMnemonic = ethers.utils.isValidMnemonic;
+
 	constructor({ passcode }) {
 		this.passcode = passcode;
 	}
+
 	async create(mnemonic) {
 		const passcode = this.passcode;
 		if (!passcode) {
