@@ -1,63 +1,71 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useHistory, Redirect } from 'react-router-dom';
 import { gapi } from 'gapi-script';
 import { ethers } from 'ethers';
-import Swal from 'sweetalert2';
 
 import { AppContext } from '../../contexts/AppContext';
-import { savePublickey, saveEncyptedWallet } from '../../utils/sessionManager';
-import { DB } from '../../constants';
+import DataService from '../../services/db';
 
-import { APP_CONSTANTS } from '../../constants';
+import { APP_CONSTANTS, BACKUP } from '../../constants';
 import { GFile, GFolder } from '../../utils/google';
 import Loading from '../global/Loading';
 
-const GDriveFolderName = 'RumsanWalletBackup';
-const BackupFileName = 'rumsan.wallet';
+const { PASSCODE_LENGTH } = APP_CONSTANTS;
+
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 const GOOGLE_REDIRECT_URL = process.env.REACT_APP_GOOGLE_REDIRECT_URL;
 const CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-const { PASSCODE_LENGTH } = APP_CONSTANTS;
 
 export default function GoogleRestore() {
+	const history = useHistory();
+	let currentWallet = null;
+
+	const Actions = [
+		{
+			hash: '#choose-account',
+			label: 'Please choose Google account. Please click the switch account button to change account.'
+		},
+		{
+			hash: '#choose-wallet',
+			label: 'Please select the wallet you wish to restore.'
+		},
+		{
+			hash: '#enter-passphrase',
+			label: 'Please enter backup passphrase.'
+		}
+	];
+
 	const { saveAppWallet } = useContext(AppContext);
-	const [progressMessage, setProgressMessage] = useState('Restoring wallet from google drive...');
-	const [progressWidth, setProgressWidth] = useState(0);
-	const [loading, setLoading] = useState(false);
+	const [loading, setLoading] = useState(null);
+	const [errorMsg, setErrorMsg] = useState(null);
 	const [gUser, setGUser] = useState({
 		id: null,
 		name: 'Loading User...',
 		email: null,
 		image: 'http://www.pngall.com/wp-content/uploads/5/Profile-PNG-Images.png'
 	});
-	const [passcode, setPasscode] = useState('');
-	const [encryptedWallet, setEncryptedWallet] = useState('');
+	const [passphrase, setPassphrase] = useState('');
 	const [walletList, setWalletList] = useState([]);
-	const [selectedWallet, setSelectedWallet] = useState('');
-	const [errorMsg, setErrorMsg] = useState('');
-	const [currentAction, setCurrentAction] = useState('showSignIn');
+	const [selectedWallet, setSelectedWallet] = useState({});
+
+	const [currentAction, setCurrentAction] = useState({});
 	const [fetchedDocs, setFetchedDocs] = useState([]);
 	const [dbContext, setDbContext] = useState(null);
 
-	const loadGapiClient = () => {
-		initDatabase();
-		gapi.load('client:auth2', initClient);
+	const changeAction = hash => {
+		setErrorMsg(null);
+		let selectedAction = Actions.find(a => a.hash === hash);
+		if (!selectedAction) setCurrentAction(Actions.find(a => a.hash === '#choose-account'));
+		else setCurrentAction(selectedAction);
 	};
 
-	const initDatabase = () => {
-		let request = window.indexedDB.open(DB.NAME, DB.VERSION);
-		request.onupgradeneeded = e => {
-			let db = request.result;
-			db.createObjectStore(DB.TABLES.DOCUMENTS, { keyPath: 'docId' });
-		};
-		request.onerror = e => {
-			Swal.fire('ERROR', e.target.errorCode, 'error');
-		};
-		request.onsuccess = e => {
-			let db = request.result;
-			console.log('DB:', db);
-			setDbContext(db);
-		};
+	const loadGapiClient = () => {
+		setDbContext(DataService);
+		history.listen(location => {
+			changeAction(location.hash);
+		});
+		changeAction(history.location.hash);
+		gapi.load('client:auth2', initClient);
 	};
 
 	const initClient = () => {
@@ -87,204 +95,251 @@ export default function GoogleRestore() {
 				image: profile.getImageUrl()
 			});
 		} else user = handleUserSignIn();
-		if (user) return fetchWallet();
 	};
 
 	const handleUserSignIn = () => {
 		return gapi.auth2.getAuthInstance().signIn();
 	};
 
-	const fetchWallet = async () => {
+	const fetchWalletList = async () => {
+		await dbContext.initialize();
+		history.push('#choose-wallet');
+		setLoading('Querying Google Drive for wallet backups. Please wait...');
 		const gFolder = new GFolder(gapi);
 		const gFile = new GFile(gapi);
-		const folder = await gFolder.ensureExists(GDriveFolderName);
-		const file = await gFile.getByName(BackupFileName, folder.id);
+		const folder = await gFolder.ensureExists(BACKUP.GDRIVE_FOLDERNAME);
 		let files = await gFile.listFiles(folder.id);
-		files = files.filter(f => ethers.utils.isAddress(f.name));
 		setWalletList(files);
-		if (files.length) {
-			console.log(files);
-			let data = await gFile.downloadFile(files[0].id);
-			const jsonData = JSON.parse(data);
-			if (jsonData.myDocuments && jsonData.myDocuments.length) setFetchedDocs(jsonData.myDocuments);
-			setEncryptedWallet(jsonData.wallet);
-		} else {
-			setCurrentAction('restore_wallet');
-			setProgressMessage(
-				'No backup found in google drive. Please follow the link below to create fresh new wallet.'
-			);
-			setProgressWidth(100);
-		}
+		setLoading(null);
 	};
 
-	const restoreDocuments = async data => {
-		for (let doc of data) {
-			await dbContext.transaction([DB.TABLES.DOCUMENTS], 'readwrite').objectStore(DB.TABLES.DOCUMENTS).add(doc);
-		}
-	};
-
-	const handlePasscodeChange = e => {
-		const { value } = e.target;
-		setPasscode(value);
-		if (value.length === PASSCODE_LENGTH) {
-			return verifyPasscodeAndRestore(value);
-		}
-	};
-
-	const verifyPasscodeAndRestore = async passcodeData => {
+	const fetchSelectedWalletData = async () => {
+		setErrorMsg(null);
+		setLoading('Fetching wallet data. Please wait...');
 		try {
-			if (fetchedDocs.length) {
-				await restoreDocuments(fetchedDocs);
-			}
-			setLoading(true);
-			const data = await ethers.Wallet.fromEncryptedJson(
-				JSON.stringify(encryptedWallet),
-				passcodeData.toString()
-			);
-			saveEncyptedWallet(JSON.stringify(encryptedWallet));
-			setLoading(false);
-			setCurrentAction('restore_wallet');
-			setProgressWidth(25);
-			setProgressMessage('Wallet downloaded. Decrypting wallet...');
-			const { privateKey, address } = data;
-			setProgressWidth(50);
-			savePublickey(address);
-			saveAppWallet({ privateKey, address });
-			setProgressMessage('Wallet restored successfully.');
-			setProgressWidth(100);
-			setPasscode('');
+			const gFile = new GFile(gapi);
+			let walletData = await gFile.downloadFile(selectedWallet.id);
+			currentWallet = JSON.parse(walletData);
+			if (!currentWallet.name) throw Error('Not a valid wallet. Please select another wallet.');
+			setSelectedWallet(Object.assign(selectedWallet, { data: currentWallet }));
+			history.push('#enter-passphrase');
 		} catch (e) {
-			console.log('ERR:', e);
-			setPasscode('');
-			setErrorMsg('Please enter correct passcode.');
-			setLoading(false);
+			setErrorMsg(
+				e.message === 'Not a valid wallet. Please select another wallet.'
+					? e.message
+					: 'Issue fetching wallet. Are you sure you selected a right wallet? Please check and try again.'
+			);
+			setSelectedWallet({});
 		}
+		setLoading(null);
+	};
+
+	const restoreWallet = async () => {
+		setErrorMsg(null);
+		setLoading('Unlocking and restoring wallet.');
+		try {
+			DataService.saveEncyptedWallet(selectedWallet.data.wallet);
+			const data = await ethers.Wallet.fromEncryptedJson(JSON.stringify(selectedWallet.data.wallet), passphrase);
+			const { privateKey, address } = data;
+			await DataService.savePublickey(address);
+			if (data.documents) await DataService.saveDocuments(data.documents);
+			if (data.assets) await DataService.saveAssets(data.assets);
+			saveAppWallet({ privateKey, address });
+			history.push('/');
+		} catch (e) {
+			console.log(e);
+			setPassphrase('');
+			setErrorMsg('Backup passphrase is incorrect. Please try again.');
+		}
+		setLoading(null);
+	};
+
+	const showInfo = msg => {
+		if (loading) return <div className="text-center p3">Loading...</div>;
+		return (
+			<div className="text-center p-3">
+				{/* {isLoading && (
+					<span className="spinner-border spinner-border-sm mr-05" role="status" aria-hidden="true"></span>
+				)} */}
+				{msg}
+			</div>
+		);
+	};
+
+	const handleBackButton = e => {
+		if (history.action === 'POP') return history.push('/google/restore');
+		history.goBack();
 	};
 
 	useEffect(loadGapiClient, []);
 
 	return (
 		<div id="appCapsule">
-			<Loading message="Verifying your passcode. Please wait..." showModal={loading} />
-			<div id="cmpMain">
-				{encryptedWallet && currentAction === 'verify_passcode' ? (
-					<div className="login-form" id="cmpUnlock" style={{ marginTop: 80 }}>
-						<div className="section">
-							<h1>Restore Wallet</h1>
-							<h4>Please enter your 6-digit old passcode</h4>
-						</div>
-						<div className="section mt-2 mb-5">
-							<div className="form-group boxed">
-								<select
-									className="form-control custom-select"
-									value={selectedWallet}
-									onChange={e => setSelectedWallet(e.target.value)}
-									required
-								>
-									<option value="">Select a wallet to restore...</option>
-									{walletList.length &&
-										walletList.map(d => {
-											return (
-												<option key={d.id} value={d.id}>
-													{d.name}
-												</option>
-											);
-										})}
-								</select>
-								<div className="input-wrapper">
-									<input
-										onChange={handlePasscodeChange}
-										type="text"
-										pattern="[0-9]*"
-										inputMode="numeric"
-										className="form-control verify-input pwd"
-										name="passcode"
-										placeholder="------"
-										maxLength={6}
-										value={passcode}
-										style={{ color: 'green' }}
-									/>
-									<div className="text-center">
-										{errorMsg && <small className="text-danger message">{errorMsg}</small>}
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				) : (
-					<div className="text-center">
-						{!encryptedWallet && progressWidth < 10 && 'Initializing google restore...'}
-					</div>
-				)}
+			<Loading message={loading} showModal={loading} />
+			<div className="appHeader bg-success text-light">
+				<div className="left">
+					{history.location.hash !== '' && (
+						<button href="#" className="headerButton btn" onClick={e => handleBackButton()}>
+							<ion-icon
+								name="chevron-back-outline"
+								role="img"
+								className="md hydrated"
+								aria-label="chevron back outline"
+							></ion-icon>
+						</button>
+					)}
+				</div>
+				<div className="pageTitle">Wallet Setup</div>
+				<div className="right">
+					<Link to="/" className="headerButton">
+						<ion-icon
+							name="home-outline"
+							role="img"
+							className="md hydrated"
+							aria-label="home button"
+						></ion-icon>
+					</Link>
+				</div>
+			</div>
 
-				{currentAction === 'showSignIn' && (
-					<div className="text-center m-5">
-						<div className="m-5">Backup will be restored from Google Drive belonging to this account.</div>
-						<div class="avatar">
-							<img src={gUser.image} alt="avatar" class="imaged w64 rounded" />
-						</div>
-						<div class="in mt-1">
-							<h3 class="name">{gUser.name}</h3>
-							<h5 class="subtext" style={{ margin: -3 }}>
-								{gUser.email}
-							</h5>
+			<div style={{ marginTop: 80 }}>
+				<div className="section">
+					<h2>Restore Wallet from Google Drive</h2>
+					<h4>{currentAction.label}</h4>
+				</div>
+
+				{currentAction.hash === '#choose-account' && (
+					<div className="text-center section full mt-2 mb-3">
+						<div className="text-center wide-block p-3">
+							<div className="avatar">
+								<img src={gUser.image} alt="avatar" className="imaged w64 rounded" />
+							</div>
+							<div className="in mt-1">
+								<h3 className="name">{gUser.name}</h3>
+								<h5 className="subtext" style={{ margin: -3 }}>
+									{gUser.email}
+								</h5>
+							</div>
+							{gUser.id && (
+								<button
+									className="btn btn-sm btn-outline-secondary mt-2"
+									id="btnMnemonic"
+									onClick={e => handleUserSignIn()}
+								>
+									Switch account
+								</button>
+							)}
 						</div>
 						{gUser.id && (
-							<div className="row m-2">
-								<div className="col-md-4"></div>
-								<div className="col-md-2 mb-3">
-									<button
-										className="btn btn-sm btn-outline-secondary"
-										id="btnMnemonic"
-										onClick={e => handleUserSignIn()}
-									>
-										Switch User
-									</button>
-								</div>
-								<div className="col-md-2">
-									<button className="btn btn-primary" id="btnMnemonic" onClick="">
-										Continue Wallet Restore
-									</button>
-								</div>
-								<div className="col-md-4"></div>
+							<div className="text-center mt-3">
+								<button
+									className="btn btn-primary"
+									id="btnMnemonic"
+									onClick={e => fetchWalletList()}
+									disabled={loading ? 'true' : ''}
+								>
+									Continue wallet restore for selected user
+								</button>
 							</div>
 						)}
 					</div>
 				)}
 
-				{currentAction === 'restore_wallet' && (
-					<div className="section full mt-2">
-						<div className="text-center" style={{ marginTop: 100 }}>
-							<h4 className="subtitle">{progressMessage}</h4>
+				{currentAction.hash === '#choose-wallet' && (
+					<div className="section full mt-2 mb-3">
+						<div className="wide-block p-0">
+							<div className="input-list">
+								{walletList.length
+									? walletList.map(d => {
+											return (
+												<div key={d.id} className="custom-control custom-radio">
+													<input
+														type="radio"
+														id={d.id}
+														name="walletList"
+														className="custom-control-input"
+														value={d.id}
+														checked={selectedWallet.id === d.id}
+														onChange={e => {
+															setErrorMsg(null);
+															setSelectedWallet(d);
+														}}
+													/>
+													<label className="custom-control-label" htmlFor={d.id}>
+														{d.name}
+													</label>
+												</div>
+											);
+									  })
+									: showInfo('There are no wallet backed up in your Google Drive.')}
+							</div>
 						</div>
-						<div>
-							<div className="progress" style={{ margin: '50px 80px 3px' }}>
-								<div
-									className="progress-bar"
-									style={{ width: `${progressWidth}%` }}
-									role="progressbar"
-									aria-valuenow={25}
-									aria-valuemin={0}
-									aria-valuemax={100}
-								/>
+
+						<div className="text-center mt-3">
+							{selectedWallet.id && (
+								<button
+									className="btn btn-primary"
+									id="btnMnemonic"
+									onClick={e => fetchSelectedWalletData()}
+									disabled={loading ? 'true' : ''}
+								>
+									Continue with selected wallet
+								</button>
+							)}
+						</div>
+					</div>
+				)}
+
+				{currentAction.hash === '#enter-passphrase' && (
+					<div className="section full mt-2 mb-3">
+						{!selectedWallet.id && <Redirect to="/google/restore#choose-account" />}
+						<div className="wide-block p-2">
+							<div className="section full">
+								<div className="form-group boxed">
+									<div className="input-wrapper">
+										<input
+											type="text"
+											value={passphrase}
+											onChange={e => setPassphrase(e.target.value)}
+											className="form-control pwd"
+											placeholder="Backup Passpharse"
+										/>
+										<i className="clear-input">
+											<ion-icon
+												name="close-circle"
+												role="img"
+												className="md hydrated"
+												aria-label="close circle"
+											></ion-icon>
+										</i>
+									</div>
+								</div>
 							</div>
-							<div className="text-center">
-								<small className="text-success message" />
-							</div>
-							<div className="text-center">
-								{progressWidth === 100 && (
-									<Link to="/" className="btn btn-primary btn-home mt-3">
-										Go to Home
-									</Link>
-								)}
-								{loading && (
-									<div className="spinner-border text-success mt-5 in-progress" role="status" />
-								)}
-							</div>
+						</div>
+
+						<div className="text-center mt-3">
+							{passphrase.length > 1 && (
+								<button
+									className="btn btn-primary"
+									id="btnMnemonic"
+									onClick={e => restoreWallet()}
+									disabled={loading ? 'true' : ''}
+								>
+									Unlock and restore wallet
+								</button>
+							)}
 						</div>
 					</div>
 				)}
 			</div>
+
+			{errorMsg && (
+				<div className="text-center">
+					<span className="text-danger">
+						<b>Error</b>: {errorMsg}
+					</span>
+				</div>
+			)}
 		</div>
 	);
 }
