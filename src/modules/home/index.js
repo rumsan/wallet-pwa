@@ -37,10 +37,10 @@ function App() {
 				<PrivateRoute exact path="/import-token" component={ImportToken} wallet={wallet} />
 				<PrivateRoute exact path="/select-token" component={SelectTokens} wallet={wallet} />
 				<PrivateRoute exact path="/profile" component={Profile} wallet={wallet} />
-				<Route exact path="/settings" component={Settings} wallet={wallet} />
+				<PrivateRoute exact path="/settings" component={Settings} wallet={wallet} />
 				<PrivateRoute exact path="/assets" component={Assets} wallet={wallet} />
 				<PrivateRoute exact path="/assets/:address" component={TokenDetails} wallet={wallet} />
-				<Route exact path="/transfer/:address" component={Transfer} wallet={wallet} />
+				<PrivateRoute exact path="/transfer/:address" component={Transfer} wallet={wallet} />
 				<PrivateRoute exact path="/vault" component={Vault} wallet={wallet} />
 			</Switch>
 			<Footer />
