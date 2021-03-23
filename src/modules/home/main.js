@@ -8,13 +8,13 @@ import Wallet from '../../utils/blockchain/wallet';
 import QR_GENERATE from '../qr_generator';
 import SetupButton from './setupButton';
 import { AppContext } from '../../contexts/AppContext';
-import { getPublicKey, getEncryptedWallet } from '../../utils/sessionManager';
+import DataService from '../../services/db';
 import { APP_CONSTANTS } from '../../constants';
 
 const { PASSCODE_LENGTH } = APP_CONSTANTS;
 
 export default function Main() {
-	const { saveAppPasscode, lockScreen, address, lockAppScreen, saveAppWallet } = useContext(AppContext);
+	const { hasWallet, setWallet, network, wallet } = useContext(AppContext);
 	let history = useHistory();
 
 	const [showWalletActions, setShowWalletActions] = useState(false);
@@ -23,20 +23,8 @@ export default function Main() {
 	const [confirmPasscode, setConfirmPasscode] = useState('');
 	const [passCodeMatch, setPasscodeMatch] = useState(true);
 	const [loadingModal, setLoadingModal] = useState(false);
-	const [currentPublicKey, setCurrentPublicKey] = useState('');
 	const [loadingMessage, setLoadingMessage] = useState('Creating your new wallet. Please wait...');
 	const [currentAction, setCurrentAction] = useState('setup_wallet');
-
-	const fetchWallet = () => {
-		const existingWallet = getEncryptedWallet();
-		const publicKey = getPublicKey(); // Check from localstorage
-		if (publicKey) setCurrentPublicKey(publicKey);
-		if (existingWallet && !address) {
-			lockAppScreen();
-		}
-	};
-
-	useEffect(fetchWallet, []);
 
 	const resetPasscodes = () => {
 		setPasscode('');
@@ -60,7 +48,7 @@ export default function Main() {
 		setPasscode(e.target.value);
 	};
 
-	const handleConfirmPasscodeChange = e => {
+	const handleConfirmPasscodeChange = async e => {
 		const { value } = e.target;
 		setConfirmPasscode(value);
 		if (value.length === PASSCODE_LENGTH) {
@@ -69,7 +57,7 @@ export default function Main() {
 				return;
 			}
 			if (currentAction === 'restore_wallet') {
-				saveAppPasscode(value);
+				await DataService.save('temp_passcode', value);
 				history.push('/mnemonic/restore');
 			}
 			if (currentAction === 'setup_wallet') setShowWalletActions(true);
@@ -82,17 +70,15 @@ export default function Main() {
 		try {
 			togglePasscodeModal();
 			setLoadingModal(true);
-			const w = new Wallet({ passcode });
-			const res = await w.create();
+			const res = await Wallet.create(passcode);
 			if (res) {
-				const { privateKey, address, wallet, encryptedWallet } = res;
-				const phrases = await wallet.mnemonic.phrase.split(' ');
-				const payload = { privateKey, address, wallet, phrases, encryptedWallet };
-				saveAppWallet(payload);
+				const { wallet, encryptedWallet } = res;
+				await DataService.save('temp_encryptedWallet', encryptedWallet);
+				setWallet(wallet);
 				history.push('/create');
 			}
 		} catch (err) {
-			Swal.fire('ERROR', err.error.message, 'error');
+			Swal.fire('ERROR', err.message, 'error');
 			setLoadingModal(false);
 		}
 	};
@@ -178,23 +164,23 @@ export default function Main() {
 				</div>
 				<div className="section mt-2 mb-5" id="cmpInfo">
 					{/* address triggers wallet created in real time */}
-					{currentPublicKey ? (
+					{DataService.getAddressFromLocal() && network != null ? (
 						<div className="card">
 							<div className="pl-4 pt-3 pr-4 text-center">
-								<QR_GENERATE publicKey={currentPublicKey || address} />
+								<QR_GENERATE address={DataService.getAddressFromLocal()} />
 							</div>
 						</div>
 					) : (
 						<div className="card mt-5">
 							<div className="card-header">
-								{!lockScreen && (
+								{!hasWallet && (
 									<h4>
 										Let's setup your wallet. You can either create a new wallet or restore existing
 										wallet. Let's begin.
 									</h4>
 								)}
 							</div>
-							{!lockScreen && !currentPublicKey && (
+							{!hasWallet && (
 								<SetupButton
 									handleGoogleRestoreClick={handleGoogleRestoreClick}
 									togglePasscodeModal={togglePasscodeModal}
@@ -203,7 +189,7 @@ export default function Main() {
 						</div>
 					)}
 				</div>
-				<div className="text-center">{lockScreen && <strong>Tap on lock icon to unlock</strong>}</div>
+				<div className="text-center">{hasWallet && !wallet && <strong>Tap on lock icon to unlock</strong>}</div>
 			</div>
 		</div>
 	);

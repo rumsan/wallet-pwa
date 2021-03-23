@@ -1,27 +1,7 @@
-const IPFS_CLIENT = require('ipfs-http-client');
-
-const IPFS_HOST = process.env.REACT_APP_IPFS_HOST;
-const IPFS_PORT = process.env.REACT_APP_IPFS_PORT;
-const IPFS_PROTOCOL = process.env.REACT_APP_PROTOCOL;
-
-const ipfs = IPFS_CLIENT({
-	host: IPFS_HOST,
-	port: IPFS_PORT,
-	protocol: IPFS_PROTOCOL
-});
-
 export function mergeAndRemoveDuplicate(array1 = [], array2 = [], keyName) {
 	const array3 = [...array1, ...array2];
 	// Return unique array on the basis of keyName.
 	return [...new Map(array3.map(item => [item[`${keyName}`], item])).values()];
-}
-
-export async function uploadToIpfs(file) {
-	try {
-		return ipfs.add(file);
-	} catch (err) {
-		throw err;
-	}
 }
 
 export function dataURLtoFile(dataurl, filename = 'my_doc') {

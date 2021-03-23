@@ -3,14 +3,14 @@ import { useHistory } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
 import { AppContext } from '../../contexts/AppContext';
-import { savePublickey, saveEncyptedWallet } from '../../utils/sessionManager';
+import DataService from '../../services/db';
 import Wallet from '../../utils/blockchain/wallet';
 import Loading from '../global/Loading';
 
 export default function RestoreMnemonic() {
 	const wordCount = 12;
 	let history = useHistory();
-	const { passcode, saveAppWallet } = useContext(AppContext);
+	const { setWallet } = useContext(AppContext);
 	const [loading, setLoading] = useState(false);
 
 	const wordRefs = React.useRef([]);
@@ -80,13 +80,13 @@ export default function RestoreMnemonic() {
 	const restoreWallet = async mnemonic => {
 		try {
 			setLoading(true);
-			const w = new Wallet({ passcode });
-			const res = await w.create(mnemonic);
-			const { privateKey, address, encryptedWallet } = res;
-			const payload = { privateKey, address };
-			savePublickey(address);
-			saveEncyptedWallet(encryptedWallet);
-			saveAppWallet(payload);
+			let passcode = await DataService.get('temp_passcode');
+			const res = await Wallet.create(passcode, mnemonic);
+			const { wallet, encryptedWallet } = res;
+			setWallet(wallet);
+			DataService.saveAddress(wallet.address);
+			await DataService.saveWallet(encryptedWallet);
+			DataService.remove('temp_passcode');
 			setLoading(false);
 			return confirmBackup();
 		} catch (err) {
@@ -105,7 +105,7 @@ export default function RestoreMnemonic() {
 		}
 		const mnemonic = words.join(' ');
 		if (!Wallet.isValidMnemonic(mnemonic)) {
-			Swal.fire('ERROR', 'Invalid mnemonic. Please check and try again', 'error');
+			Swal.fire('ERROR', 'Invalid mnemonic. Please check and try again.', 'error');
 			return;
 		}
 		return restoreWallet(mnemonic);

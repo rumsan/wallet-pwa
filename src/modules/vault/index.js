@@ -7,9 +7,10 @@ import ModalWrapper from '../../modules/global/ModalWrapper';
 import ActionButton from './actionButton';
 import ImageViewer from '../../modules/global/ImageViewer';
 
-import { uploadToIpfs, dataURLtoFile, base64ToBlob, blobToBase64 } from '../../utils';
-import { DB } from '../../constants';
+import { dataURLtoFile, base64ToBlob, blobToBase64 } from '../../utils';
+import DataService from '../../services/db';
 import docImg from '../../assets/images/doc.png';
+const IPFS_CLIENT = require('ipfs-http-client');
 
 // const IPFS_VIEW_URL = 'http://127.0.0.1:8080/ipfs';
 
@@ -27,8 +28,6 @@ export default function Index() {
 	const [imagePreviewModal, setImagePreviewModal] = useState(false);
 	const [documentName, setDocumentName] = useState('');
 	const [blobFile, setBlobFile] = useState('');
-
-	const [dbContext, setDbContext] = useState(null);
 	const [myDocuments, setMyDocuments] = useState([]);
 
 	const handleDocumentNameChange = e => {
@@ -53,10 +52,12 @@ export default function Index() {
 
 	const webcamRef = React.useRef(null);
 
-	const handleDocumentSubmit = e => {
+	const handleDocumentSubmit = async e => {
 		e.preventDefault();
+		const ipfsUrl = await DataService.getIpfsUrl();
+		const ipfs = IPFS_CLIENT(ipfsUrl);
 		const file = dataURLtoFile(previewImage);
-		uploadToIpfs(file)
+		ipfs.add(file)
 			.then(res => {
 				saveDocument(res.path);
 				toggleImagePreviewModal();
@@ -97,62 +98,16 @@ export default function Index() {
 			});
 	};
 
-	const initDatabase = () => {
-		let request = window.indexedDB.open(DB.NAME, DB.VERSION);
-		request.onupgradeneeded = e => {
-			let db = request.result;
-			// Create db tables here
-			db.createObjectStore(DB.TABLES.DOCUMENTS, { keyPath: 'docId' });
-		};
-		request.onerror = e => {
-			Swal.fire('ERROR', e.target.errorCode, 'error');
-		};
-		request.onsuccess = e => {
-			let db = request.result;
-			setDbContext(db);
-			fetchDocuments(db);
-		};
-	};
-
-	const saveDocument = docId => {
+	const saveDocument = async hash => {
 		let payload = {
-			docId: docId,
-			docName: documentName,
+			hash,
+			name: documentName,
 			file: blobFile,
 			createdAt: Date.now()
 		};
-		const request = dbContext
-			.transaction([DB.TABLES.DOCUMENTS], 'readwrite')
-			.objectStore(DB.TABLES.DOCUMENTS)
-			.add(payload);
-
-		request.onsuccess = function (e) {
-			fetchDocuments(dbContext);
-		};
-		request.onerror = function (e) {
-			Swal.fire('ERROR', e.target.errorCode, 'error');
-		};
-	};
-
-	const fetchDocuments = db => {
-		let myDocs = [];
-		let objectStore = db.transaction(DB.TABLES.DOCUMENTS).objectStore(DB.TABLES.DOCUMENTS);
-		objectStore.openCursor().onsuccess = function (e) {
-			let cursor = e.target.result;
-			if (cursor) {
-				const { docId, docName, file } = cursor.value;
-				if (file) {
-					blobToBase64(file).then(d => {
-						let doc = { docId, docName, file: d };
-						myDocs.push(doc);
-					});
-				}
-				cursor.continue();
-			}
-			setTimeout(() => {
-				setMyDocuments(myDocs);
-			}, 1000);
-		};
+		await DataService.saveDocuments(payload);
+		payload.file = await blobToBase64(blobFile);
+		setMyDocuments([...myDocuments, payload]);
 	};
 
 	const handleDownloadClick = e => {
@@ -181,7 +136,15 @@ export default function Index() {
 		console.log('HELLO');
 	};
 
-	useEffect(initDatabase, []);
+	useEffect(() => {
+		(async () => {
+			let documents = await DataService.listDocuments();
+			for (let doc of documents) {
+				doc.file = await blobToBase64(doc.file);
+			}
+			setMyDocuments(documents);
+		})();
+	}, []);
 
 	return (
 		<>
@@ -279,10 +242,10 @@ export default function Index() {
 									{myDocuments.length > 0 &&
 										myDocuments.map(doc => {
 											return (
-												<div key={doc.docId} className="col-sm-3" style={{ marginTop: 15 }}>
+												<div key={doc.hash} className="col-sm-3" style={{ marginTop: 15 }}>
 													<div
 														className="card"
-														onClick={e => toggleImageViewModal(e, doc.file, doc.docName)}
+														onClick={e => toggleImageViewModal(e, doc.file, doc.name)}
 													>
 														<img
 															style={{ borderRadius: '6px' }}

@@ -2,27 +2,36 @@ import APP_ACTIONS from '../actions/appActions';
 
 export default (state, action) => {
 	switch (action.type) {
-		case APP_ACTIONS.SET_APP_WALLET:
-			const { privateKey, address, wallet, phrases, encryptedWallet } = action.data;
+		case APP_ACTIONS.INIT_APP:
 			return {
 				...state,
-				privateKey,
-				address,
-				wallet,
-				phrases,
-				encryptedWallet
+				address: action.data.address,
+				network: action.data.network,
+				hasWallet: action.data.hasWallet
+			};
+
+		case APP_ACTIONS.SET_NETWORK:
+			return {
+				...state,
+				network: action.data
+			};
+
+		case APP_ACTIONS.SET_WALLET:
+			return {
+				...state,
+				wallet: action.data
+			};
+
+		case APP_ACTIONS.SET_HASWALLET:
+			return {
+				...state,
+				hasWallet: action.data
 			};
 
 		case APP_ACTIONS.SET_ETH_BALANCE:
 			return {
 				...state,
 				ethBalance: action.data
-			};
-
-		case APP_ACTIONS.SET_APP_PASSCODE:
-			return {
-				...state,
-				passcode: action.data
 			};
 
 		case APP_ACTIONS.SET_SCCANNED_DATA:
@@ -36,18 +45,6 @@ export default (state, action) => {
 			return {
 				...state,
 				sendingTokenName: action.data
-			};
-
-		case APP_ACTIONS.LOCK_APP:
-			return {
-				...state,
-				lockScreen: action.data
-			};
-
-		case APP_ACTIONS.UNLOCK_APP:
-			return {
-				...state,
-				lockScreen: action.data
 			};
 
 		default:

@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 
 import GFolder from '../../utils/google/gfolder';
 import GFile from '../../utils/google/gfile';
-import { getEncryptedWallet, saveBackupDocs, getBackupDocs, clearBackupDocs } from '../../utils/sessionManager';
+import { getEncryptedWallet, saveBackupDocs, clearBackupDocs } from '../../utils/sessionManager';
 import { DB, BACKUP } from '../../constants';
 
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
@@ -37,7 +37,6 @@ export default function GoogleBackup() {
 
 	const createBackup = async () => {
 		try {
-			const backupDocs = getBackupDocs();
 			setLoading(true);
 			const gFolder = new GFolder(gapi);
 			const gFile = new GFile(gapi);

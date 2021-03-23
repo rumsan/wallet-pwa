@@ -2,39 +2,29 @@ import React, { useEffect, useState, useContext } from 'react';
 import AppHeader from '../layouts/AppHeader';
 import EtherImg from '../../assets/images/ether.png';
 import { useHistory } from 'react-router-dom';
-import { getTokenAssets, getCurrentNetwork } from '../../utils/sessionManager';
 import { DEFAULT_TOKEN } from '../../constants';
+import DataService from '../../services/db';
 
 import { AppContext } from '../../contexts/AppContext';
 const ETHER_NETWORK = 'ethereum';
 
 export default function Details(props) {
-	const currentNetwork = getCurrentNetwork();
-	const tokens = getTokenAssets();
 	let history = useHistory();
-	const { saveSendingTokenName, ethBalance } = useContext(AppContext);
+	const { network } = useContext(AppContext);
+	let tokenAddress = props.match.params.address;
 
-	const { symbol } = props.match.params;
 	const [tokenDetails, setTokenDetails] = useState(null);
 
-	const getTokenDetails = () => {
-		if (symbol === DEFAULT_TOKEN.SYMBOL) {
-			let token = { tokenName: DEFAULT_TOKEN.NAME, tokenBalance: ethBalance || 0, symbol };
-			setTokenDetails(token);
-		} else {
-			const details = tokens.find(item => item.symbol === symbol);
-			if (details) setTokenDetails(details);
-		}
-	};
+	useEffect(() => {
+		(async () => {
+			const token = await DataService.getAsset(tokenAddress);
+			if (token) setTokenDetails(token);
+		})();
+	}, [tokenAddress]);
 
-	useEffect(getTokenDetails, [symbol]);
-
-	const handleTransferClick = e => {
+	const handleTransferClick = async e => {
 		e.preventDefault();
-		const details = tokens.find(item => item.symbol === symbol);
-		if (details) saveSendingTokenName(details.tokenName);
-		else saveSendingTokenName(ETHER_NETWORK);
-		history.push('/transfer');
+		history.push('/transfer/' + tokenAddress);
 	};
 	return (
 		<>
@@ -47,14 +37,14 @@ export default function Details(props) {
 							<div className="in">
 								<img src={EtherImg} alt="product" className="imaged" />
 								<div className="text">
-									<h3 className="title">{tokenDetails ? tokenDetails.tokenName : 'N/A'}</h3>
+									<h3 className="title">{tokenDetails ? tokenDetails.name : 'N/A'}</h3>
 									<p className="detail">{tokenDetails && tokenDetails.symbol}</p>
-									<strong className="price"> {tokenDetails && tokenDetails.tokenBalance}</strong>
+									<strong className="price"> {tokenDetails && tokenDetails.balance}</strong>
 								</div>
 							</div>
 							<div className="cart-item-footer">
 								<div className="stepper  stepper-secondary">
-									<span style={{ fontSize: '0.8rem' }}>{currentNetwork.display}</span>
+									<span style={{ fontSize: '0.8rem' }}>{network && network.display}</span>
 								</div>
 								<a
 									href="#send"

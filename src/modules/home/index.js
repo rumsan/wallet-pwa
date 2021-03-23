@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useEffect, useContext } from 'react';
 import { Route, Switch } from 'react-router-dom';
+
+import { AppContext } from '../../contexts/AppContext';
+import PrivateRoute from './PrivateRoute';
 
 import BackupWallet from '../wallet/backup/index';
 import Footer from '../layouts/Footer';
@@ -8,27 +11,37 @@ import ImportToken from '../tokens/importToken';
 import Main from './main';
 import NetworkSettings from '../settings/network';
 import SelectTokens from '../tokens/selectTokens';
-import Settings from '../settings';
+import Profile from '../settings';
+import Settings from '../settings/misc';
 import Transfer from '../transfer';
-import Tokens from '../tokens';
+import Assets from '../tokens';
 import TokenDetails from '../tokens/details';
 import Vault from '../vault';
 
 function App() {
+	const { initApp, wallet } = useContext(AppContext);
+
+	useEffect(() => {
+		(async () => {
+			initApp();
+		})();
+	}, [initApp]);
+
 	return (
 		<>
 			<Header />
 			<Switch>
 				<Route exact path="/" component={Main} />
-				<Route exact path="/backup" component={BackupWallet} />
-				<Route exact path="/networks" component={NetworkSettings} />
-				<Route exact path="/import-token" component={ImportToken} />
-				<Route exact path="/select-token" component={SelectTokens} />
-				<Route exact path="/settings" component={Settings} />
-				<Route exact path="/tokens" component={Tokens} />
-				<Route exact path="/token/:symbol" component={TokenDetails} />
-				<Route exact path="/transfer" component={Transfer} />
-				<Route exact path="/vault" component={Vault} />
+				<PrivateRoute exact path="/backup" component={BackupWallet} wallet={wallet} />
+				<PrivateRoute exact path="/networks" component={NetworkSettings} wallet={wallet} />
+				<PrivateRoute exact path="/import-token" component={ImportToken} wallet={wallet} />
+				<PrivateRoute exact path="/select-token" component={SelectTokens} wallet={wallet} />
+				<PrivateRoute exact path="/profile" component={Profile} wallet={wallet} />
+				<Route exact path="/settings" component={Settings} wallet={wallet} />
+				<PrivateRoute exact path="/assets" component={Assets} wallet={wallet} />
+				<PrivateRoute exact path="/assets/:address" component={TokenDetails} wallet={wallet} />
+				<Route exact path="/transfer/:address" component={Transfer} wallet={wallet} />
+				<PrivateRoute exact path="/vault" component={Vault} wallet={wallet} />
 			</Switch>
 			<Footer />
 		</>

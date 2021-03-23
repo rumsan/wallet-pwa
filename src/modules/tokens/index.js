@@ -1,26 +1,55 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import AppHeader from '../layouts/AppHeader';
-import { getTokenAssets } from '../../utils/sessionManager';
 import { AppContext } from '../../contexts/AppContext';
 import EtherImg from '../../assets/images/ether.png';
-import { DEFAULT_TOKEN } from '../../constants';
+import Blockchain from '../misc/blockchain';
+import Contract from '../../utils/blockchain/contract';
+import DataService from '../../services/db';
 
 export default function Index() {
 	let history = useHistory();
-	const { ethBalance } = useContext(AppContext);
+	const { address, network, wallet } = useContext(AppContext);
 
 	const [tokenAssets, setTokenAssets] = useState([]);
+	const [ethBalance, setEthBalance] = useState(0);
 
 	useEffect(() => {
-		const _tokens = getTokenAssets();
-		setTokenAssets(_tokens);
-	}, []);
+		(async () => {
+			let assets = await DataService.listAssets(network.name);
+			const defaultAsset = assets.find(a => a.address === 'default');
+			assets = assets.filter(a => a.address !== 'default');
+			assets.unshift(defaultAsset);
+			setTokenAssets(assets);
+		})();
+	}, [network.name]);
 
-	const handleTokenClick = (e, symbol) => {
+	const getBalances = useCallback(async () => {
+		for (let token of tokenAssets) {
+			if (token.address === 'default') {
+				token.balance = await Blockchain({ network }).getBalance(address);
+			} else {
+				const contract = Contract({ wallet, address: token.address, type: 'erc20' }).get();
+				const tokenBalance = await contract.balanceOf(address);
+				token.balance = tokenBalance.toNumber();
+			}
+			setEthBalance(token.balance);
+			DataService.saveAsset(token);
+		}
+	}, [address, network, tokenAssets, wallet]);
+
+	useEffect(() => {
+		getBalances();
+		const interval = setInterval(() => {
+			getBalances();
+		}, 10000);
+		return () => clearInterval(interval);
+	}, [getBalances]);
+
+	const handleTokenClick = (e, tokenAddress) => {
 		e.preventDefault();
-		history.push('/token/' + symbol);
+		history.push('/assets/' + tokenAddress);
 	};
 
 	const handleIconClick = e => {
@@ -36,20 +65,6 @@ export default function Index() {
 					<div className="listview-title mt-2">Your Token Assets</div>
 
 					<ul className="listview image-listview">
-						<li key={DEFAULT_TOKEN.SYMBOL}>
-							<a href="#view" className="item" onClick={e => handleTokenClick(e, DEFAULT_TOKEN.SYMBOL)}>
-								<div className="item">
-									<img src={EtherImg} alt="Token" className="image" />
-									<div className="in">
-										<div>
-											{DEFAULT_TOKEN.NAME}
-											<footer>{DEFAULT_TOKEN.SYMBOL}</footer>
-										</div>
-										<span className="badge badge-primary">{ethBalance || 0}</span>
-									</div>
-								</div>
-							</a>
-						</li>
 						{tokenAssets && tokenAssets.length > 0 ? (
 							tokenAssets.map(token => {
 								return (
@@ -57,17 +72,17 @@ export default function Index() {
 										<a
 											href="#view"
 											className="item"
-											onClick={e => handleTokenClick(e, token.symbol)}
+											onClick={e => handleTokenClick(e, token.address)}
 										>
 											<div className="item">
 												<img src={EtherImg} alt="Token" className="image" />
 												<div className="in">
 													<div>
-														{token.tokenName || 'N/A'}
+														{token.name || 'N/A'}
 														<footer>{token.symbol}</footer>
 													</div>
 													<span className="badge badge-primary">
-														{token.tokenBalance || 0}
+														{token.balance ? Number(token.balance).toFixed(2) : 0}
 													</span>
 												</div>
 											</div>

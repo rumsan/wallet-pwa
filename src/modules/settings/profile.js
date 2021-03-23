@@ -56,6 +56,14 @@ export default function Profile() {
 									</div>
 								</Link>
 							</li>
+							<li>
+								<Link to="/settings" className="item">
+									<div className="in">
+										<div>Settings</div>
+										<footer>...</footer>
+									</div>
+								</Link>
+							</li>
 						</ul>
 					</div>
 					{/* * settings */}

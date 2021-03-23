@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link, useHistory, Redirect } from 'react-router-dom';
 import { gapi } from 'gapi-script';
-import { ethers } from 'ethers';
+import Wallet from '../../utils/blockchain/wallet';
 
 import { AppContext } from '../../contexts/AppContext';
 import DataService from '../../services/db';
 
-import { APP_CONSTANTS, BACKUP } from '../../constants';
+import { BACKUP } from '../../constants';
 import { GFile, GFolder } from '../../utils/google';
 import Loading from '../global/Loading';
 
-const { PASSCODE_LENGTH } = APP_CONSTANTS;
+//const { PASSCODE_LENGTH } = APP_CONSTANTS;
 
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 const GOOGLE_REDIRECT_URL = process.env.REACT_APP_GOOGLE_REDIRECT_URL;
@@ -35,7 +35,7 @@ export default function GoogleRestore() {
 		}
 	];
 
-	const { saveAppWallet } = useContext(AppContext);
+	const { setWallet } = useContext(AppContext);
 	const [loading, setLoading] = useState(null);
 	const [errorMsg, setErrorMsg] = useState(null);
 	const [gUser, setGUser] = useState({
@@ -49,7 +49,6 @@ export default function GoogleRestore() {
 	const [selectedWallet, setSelectedWallet] = useState({});
 
 	const [currentAction, setCurrentAction] = useState({});
-	const [fetchedDocs, setFetchedDocs] = useState([]);
 	const [dbContext, setDbContext] = useState(null);
 
 	const changeAction = hash => {
@@ -102,7 +101,6 @@ export default function GoogleRestore() {
 	};
 
 	const fetchWalletList = async () => {
-		await dbContext.initialize();
 		history.push('#choose-wallet');
 		setLoading('Querying Google Drive for wallet backups. Please wait...');
 		const gFolder = new GFolder(gapi);
@@ -138,13 +136,12 @@ export default function GoogleRestore() {
 		setErrorMsg(null);
 		setLoading('Unlocking and restoring wallet.');
 		try {
-			DataService.saveEncyptedWallet(selectedWallet.data.wallet);
-			const data = await ethers.Wallet.fromEncryptedJson(JSON.stringify(selectedWallet.data.wallet), passphrase);
-			const { privateKey, address } = data;
-			await DataService.savePublickey(address);
-			if (data.documents) await DataService.saveDocuments(data.documents);
-			if (data.assets) await DataService.saveAssets(data.assets);
-			saveAppWallet({ privateKey, address });
+			DataService.saveWallet(JSON.stringify(selectedWallet.data.wallet));
+			const wallet = await Wallet.loadFromJson(passphrase, JSON.stringify(selectedWallet.data.wallet));
+			await DataService.saveAddress(wallet.address);
+			if (selectedWallet.data.documents) await DataService.saveDocuments(selectedWallet.data.documents);
+			if (selectedWallet.data.assets) await DataService.addMultiAssets(selectedWallet.data.assets);
+			setWallet(wallet);
 			history.push('/');
 		} catch (e) {
 			console.log(e);

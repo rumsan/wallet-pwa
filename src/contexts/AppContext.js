@@ -1,55 +1,47 @@
-import React, { createContext, useReducer } from 'react';
+import React, { createContext, useReducer, useCallback } from 'react';
 import appReduce from '../reducers/appReducer';
 import APP_ACTIONS from '../actions/appActions';
-import { getNetworkByName } from '../constants/networks';
-import { saveCurrentNetwork, saveTokenAssets } from '../utils/sessionManager';
+import { saveTokenAssets } from '../utils/sessionManager';
+import DataService from '../services/db';
+import { DEFAULT_TOKEN } from '../constants';
 
 const initialState = {
 	ethBalance: '',
 	sendingTokenName: '',
-	privateKey: null,
-	address: null, // Public Key
+	address: null,
+	network: null,
 	wallet: null,
-	lockScreen: false,
+	hasWallet: false,
 	scannedEthAddress: '',
-	scannedAmount: null,
-	phrases: [],
-	encryptedWallet: '',
-	passcode: '' // To restore from mnemonic
+	scannedAmount: null
 };
 
 export const AppContext = createContext(initialState);
 export const AppContextProvider = ({ children }) => {
 	const [state, dispatch] = useReducer(appReduce, initialState);
 
-	function saveAppWallet(wallet) {
-		dispatch({ type: APP_ACTIONS.SET_APP_WALLET, data: wallet });
+	const initApp = useCallback(async () => {
+		DataService.addDefaultAsset(DEFAULT_TOKEN.SYMBOL, DEFAULT_TOKEN.NAME);
+		let data = await DataService.initAppData();
+		data.hasWallet = data.wallet === null ? false : true;
+		if (!data.hasWallet) localStorage.removeItem('address');
+		dispatch({ type: APP_ACTIONS.INIT_APP, data });
+	}, [dispatch]);
+
+	function setHasWallet(hasWallet) {
+		dispatch({ type: APP_ACTIONS.SET_HASWALLET, data: hasWallet });
 	}
 
-	function lockAppScreen() {
-		dispatch({ type: APP_ACTIONS.LOCK_APP, data: true });
+	function setWallet(wallet) {
+		dispatch({ type: APP_ACTIONS.SET_WALLET, data: wallet });
 	}
 
-	function unlockAppScreen() {
-		dispatch({ type: APP_ACTIONS.UNLOCK_APP, data: false });
+	function setNetwork(network) {
+		dispatch({ type: APP_ACTIONS.SET_NETWORK, data: network });
 	}
 
 	function saveScannedAddress(data) {
 		dispatch({ type: APP_ACTIONS.SET_SCCANNED_DATA, data });
-	}
-
-	function changeCurrentNetwork(name, url) {
-		let network = null;
-		if (name === 'custom') {
-			network = { name: 'custom', url, display: 'Custom Network' };
-		} else {
-			network = getNetworkByName(name);
-		}
-		saveCurrentNetwork(network);
-	}
-
-	function saveAppPasscode(passcode) {
-		dispatch({ type: APP_ACTIONS.SET_APP_PASSCODE, data: passcode });
 	}
 
 	function saveTokens(tokens) {
@@ -69,24 +61,20 @@ export const AppContextProvider = ({ children }) => {
 			value={{
 				ethBalance: state.ethBalance,
 				address: state.address,
-				encryptedWallet: state.encryptedWallet,
-				lockScreen: state.lockScreen,
-				passcode: state.passcode,
-				phrases: state.phrases,
-				privateKey: state.privateKey,
 				scannedEthAddress: state.scannedEthAddress,
 				scannedAmount: state.scannedAmount,
+				hasWallet: state.hasWallet,
+				network: state.network,
 				wallet: state.wallet,
 				sendingTokenName: state.sendingTokenName,
+				initApp,
 				saveSendingTokenName,
-				changeCurrentNetwork,
 				saveScannedAddress,
-				unlockAppScreen,
-				lockAppScreen,
-				saveAppWallet,
-				saveAppPasscode,
 				saveTokens,
 				saveEthBalance,
+				setHasWallet,
+				setNetwork,
+				setWallet,
 				dispatch
 			}}
 		>

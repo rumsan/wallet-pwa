@@ -5,41 +5,30 @@ import QrReader from 'react-qr-reader';
 
 import Loading from '../global/Loading';
 import AppHeader from '../layouts/AppHeader';
-import { getTokenAssets } from '../../utils/sessionManager';
-import { getAbi, ethersContract } from '../../utils/blockchain/abi';
-import { mergeAndRemoveDuplicate } from '../../utils/index';
+import Contract from '../../utils/blockchain/contract';
+import DataService from '../../services/db';
 import { AppContext } from '../../contexts/AppContext';
 import ModalWrapper from '../global/ModalWrapper';
 
 import { APP_CONSTANTS } from '../../constants';
-const { CONTRACT_NAME, SCAN_DELAY, SCANNER_PREVIEW_STYLE, SCANNER_CAM_STYLE } = APP_CONSTANTS;
+const { SCAN_DELAY, SCANNER_PREVIEW_STYLE, SCANNER_CAM_STYLE } = APP_CONSTANTS;
 
 export default function ImportToken() {
-	const { address, saveTokens } = useContext(AppContext);
+	const { address, wallet, network } = useContext(AppContext);
 	let history = useHistory();
 
-	const [contractAddress, setContractAddress] = useState('');
-	const [tokenName, setTokenName] = useState('');
-	const [tokenBalance, setTokenBalance] = useState(0);
-	const [tokenSymbol, setTokenSymbol] = useState('');
-	const [decimalsPrecision, setDecimalsPrecision] = useState('');
+	const [token, setToken] = useState({});
 	const [loading, setLoading] = useState(false);
 	const [scanModal, setScanModal] = useState(false);
-
-	const resetFormFields = () => {
-		setContractAddress('');
-		setTokenSymbol('');
-		setDecimalsPrecision('');
-	};
 
 	const handleScanModalToggle = () => setScanModal(!scanModal);
 
 	const handleScanError = err => {
 		alert('Oops, scanning failed. Please try again');
 	};
+
 	const handlScanSuccess = data => {
 		if (data) {
-			setContractAddress(data);
 			handleScanModalToggle();
 			fetchTokenDetails(data);
 		}
@@ -48,45 +37,38 @@ export default function ImportToken() {
 	const fetchTokenDetails = async contractAddress => {
 		try {
 			setLoading(true);
-			let tokenAbi = await getAbi(CONTRACT_NAME);
-			let TokenContract = await ethersContract(tokenAbi, contractAddress);
-			let name = await TokenContract.name();
-			let symbol = await TokenContract.symbol();
-			let decimals = await TokenContract.decimals();
-			let balance = await TokenContract.balanceOf(address);
-			setTokenName(name);
-			setTokenBalance(balance.toNumber());
-			setTokenSymbol(symbol);
-			setDecimalsPrecision(decimals);
+			if (!wallet) throw Error('Please unlock the wallet first.');
+			const tokenContract = Contract({ wallet, address: contractAddress, type: 'erc20' }).get();
+
+			const name = await tokenContract.name();
+			const symbol = await tokenContract.symbol();
+			const decimal = await tokenContract.decimals();
+			const balance = await tokenContract.balanceOf(address);
+			setToken({
+				address: contractAddress,
+				name,
+				symbol,
+				decimal,
+				balance: balance.toNumber(),
+				network
+			});
+
 			setLoading(false);
 		} catch (err) {
-			resetFormFields();
 			setLoading(false);
+			setToken({ address: '', name: '', symbol: '', decimal: '', balance: '', network: null });
 			Swal.fire('ERROR', err.message, 'error');
 		}
 	};
 
-	const handleClickAddToken = () => {
-		const _tokens = getTokenAssets();
-		let existing = _tokens || [];
-		let newData = [];
-		const data = {
-			tokenName: tokenName,
-			contract: contractAddress,
-			symbol: tokenSymbol,
-			decimal: decimalsPrecision,
-			tokenBalance: tokenBalance
-		};
-		newData.push(data);
-		const merged = mergeAndRemoveDuplicate(existing, newData, 'symbol');
-		saveTokens(merged);
-		resetFormFields();
-		history.push('/tokens');
+	const handleClickAddToken = async () => {
+		await DataService.addMultiAssets(token);
+		setToken({ address: '', name: '', symbol: '', decimal: '', balance: '', network: null });
+		history.push('/assets');
 	};
 
 	const changeInputContractAddress = async e => {
 		const { value } = e.target;
-		setContractAddress(value);
 		if (value.length > 40) {
 			return fetchTokenDetails(value);
 		}
@@ -124,7 +106,7 @@ export default function ImportToken() {
 													id="contractAddress"
 													name="contractAddress"
 													placeholder="Enter token contract address"
-													value={contractAddress}
+													value={token.address}
 													onChange={changeInputContractAddress}
 												/>
 												<i className="clear-input">
@@ -148,55 +130,65 @@ export default function ImportToken() {
 										</div>
 									</div>
 									<div className="form-group boxed" style={{ padding: 0 }}>
-										<div className="input-wrapper">
-											<label className="label" htmlFor="tokenSymbol">
-												Token Symbol:
-											</label>
-											<input
-												type="text"
-												className="form-control"
-												id="tokenSymbol"
-												name="tokenSymbol"
-												value={tokenSymbol}
-												readOnly
-											/>
-											<i className="clear-input">
-												<ion-icon
-													name="close-circle"
-													role="img"
-													className="md hydrated"
-													aria-label="close circle"
-												/>
-											</i>
+										<div className="row">
+											<div className="col-md-6" style={{ marginBottom: 10 }}>
+												<div className="input-wrapper">
+													<label className="label">Token Name:</label>
+													<input
+														type="text"
+														className="form-control"
+														name="symbol"
+														value={token.name}
+														readOnly
+													/>
+												</div>
+											</div>
+											<div className="col-md-6">
+												<div className="input-wrapper">
+													<label className="label">Token Symbol:</label>
+													<input
+														type="text"
+														className="form-control"
+														name="symbol"
+														value={token.symbol}
+														readOnly
+													/>
+												</div>
+											</div>
 										</div>
 									</div>
 
-									<div className="form-group boxed" style={{ marginTop: 15, padding: 0 }}>
-										<div className="input-wrapper">
-											<label className="label" htmlFor="decimalPrecision">
-												Decimals of Precision:
-											</label>
-											<input
-												type="number"
-												className="form-control"
-												id="decimalPrecision"
-												name="decimalPrecision"
-												value={decimalsPrecision}
-												readOnly
-											/>
-											<i className="clear-input">
-												<ion-icon
-													name="close-circle"
-													role="img"
-													className="md hydrated"
-													aria-label="close circle"
-												/>
-											</i>
+									<div className="form-group boxed" style={{ marginTop: 12, padding: 0 }}>
+										<div className="row">
+											<div className="col-md-6" style={{ marginBottom: 10 }}>
+												<div className="input-wrapper">
+													<label className="label">Decimals of Precision:</label>
+													<input
+														type="number"
+														className="form-control"
+														name="decimal"
+														value={token.decimal}
+														readOnly
+													/>
+												</div>
+											</div>
+											<div className="col-md-6">
+												<div className="input-wrapper">
+													<label className="label">Current Balance:</label>
+													<input
+														type="number"
+														className="form-control"
+														name="balance"
+														value={token.balance}
+														readOnly
+													/>
+												</div>
+											</div>
 										</div>
 									</div>
 								</form>
 							</div>
-							{contractAddress && tokenSymbol && (
+							{token.symbol && (
 								<div className="card-footer text-right">
 									<button
 										type="button"

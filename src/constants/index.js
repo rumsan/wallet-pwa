@@ -2,7 +2,6 @@ module.exports = {
 	APP_CONSTANTS: {
 		PASSCODE_LENGTH: 6,
 		SCAN_DELAY: 600,
-		CONTRACT_NAME: 'rumsan',
 		SCANNER_PREVIEW_STYLE: {
 			height: 300,
 			width: 400,
@@ -31,7 +30,6 @@ module.exports = {
 	},
 	DEFAULT_TOKEN: {
 		NAME: 'Ether',
-		SYMBOL: 'ETH',
-		NETWORK: 'ethereum'
+		SYMBOL: 'ETH'
 	}
 };

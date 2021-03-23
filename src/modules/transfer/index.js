@@ -5,36 +5,28 @@ import { ethers } from 'ethers';
 import QrReader from 'react-qr-reader';
 
 import { AppContext } from '../../contexts/AppContext';
-import Wallet from '../../utils/blockchain/wallet';
 import Loading from '../global/Loading';
 import AppHeader from '../layouts/AppHeader';
 import ModalWrapper from '../global/ModalWrapper';
-import { APP_CONSTANTS, DEFAULT_TOKEN } from '../../constants';
-import { getAbi, ethersWallet } from '../../utils/blockchain/abi';
-import { getTokenAssets, getCurrentNetwork } from '../../utils/sessionManager';
+import { APP_CONSTANTS } from '../../constants';
+import Contract from '../../utils/blockchain/contract';
+import DataService from '../../services/db';
 
-const { CONTRACT_NAME, SCAN_DELAY, SCANNER_PREVIEW_STYLE, SCANNER_CAM_STYLE } = APP_CONSTANTS;
+const { SCAN_DELAY, SCANNER_PREVIEW_STYLE, SCANNER_CAM_STYLE } = APP_CONSTANTS;
 
-export default function Index() {
-	const {
-		privateKey,
-		saveScannedAddress,
-		scannedAmount,
-		scannedEthAddress,
-		saveSendingTokenName,
-		sendingTokenName,
-		ethBalance
-	} = useContext(AppContext);
+export default function Index(props) {
+	const { saveScannedAddress, saveSendingTokenName, network, wallet } = useContext(AppContext);
 	let history = useHistory();
-	const currentNetwork = getCurrentNetwork();
+
+	let tokenAddress = props.match.params.address;
+
+	const [tokenDetails, setTokenDetails] = useState(null);
 
 	const [sendAmount, setSendAmount] = useState('');
 	const [sendToAddress, setSendToAddress] = useState('');
 	const [loadingModal, setLoadingModal] = useState(false);
 	const [scanModal, setScanModal] = useState(false);
 	const [sendingToken, setSendingTokenSymbol] = useState('');
-	const [tokenAssets, setTokenAssets] = useState([]);
-	const [currentBalance, setCurrentBalance] = useState('');
 
 	const handleScanModalToggle = () => setScanModal(!scanModal);
 
@@ -100,7 +92,7 @@ export default function Index() {
 			confirmButtonText: 'Okay'
 		}).then(result => {
 			if (result.value) {
-				history.push('/tokens');
+				history.push('/assets');
 			}
 		});
 	};
@@ -119,7 +111,7 @@ export default function Index() {
 			confirmButtonText: 'Okay'
 		}).then(result => {
 			if (result.value) {
-				history.push('/');
+				history.push('/assets');
 			}
 		});
 	};
@@ -145,7 +137,7 @@ export default function Index() {
 			setLoadingModal(true);
 			setTimeout(async () => {
 				try {
-					if (sendingToken === DEFAULT_TOKEN.SYMBOL) await sendEther(data);
+					if (tokenDetails.address === 'default') await sendEther(data);
 					else await sendERCToken();
 				} catch (e) {
 					Swal.fire('ERROR', e.error.message, 'error');
@@ -158,23 +150,10 @@ export default function Index() {
 		}
 	};
 
-	const findContractBySymbol = sendingToken => {
-		let data = null;
-		if (tokenAssets.length) {
-			data = tokenAssets.filter(item => item.symbol === sendingToken);
-		}
-		return data;
-	};
-
 	const sendERCToken = async () => {
 		try {
-			let contract = findContractBySymbol(sendingToken);
-			if (!contract) throw new Error('Contract not found');
-			const contractAddress = contract[0].contract;
-			let tokenAbi = await getAbi(CONTRACT_NAME);
-			const senderWallet = await ethersWallet(privateKey);
-			const TokenContract = new ethers.Contract(contractAddress, tokenAbi, senderWallet);
-			await TokenContract.transfer(sendToAddress, sendAmount);
+			const tokenContract = Contract({ wallet, address: tokenDetails.address, type: 'erc20' }).get();
+			await tokenContract.transfer(sendToAddress, sendAmount);
 			sendERCSuccess(sendAmount, sendToAddress);
 		} catch (err) {
 			Swal.fire('ERROR', err.message, 'error');
@@ -183,12 +162,11 @@ export default function Index() {
 
 	const sendEther = async data => {
 		try {
-			const w = new Wallet({});
-			const wallet = await w.loadFromPrivateKey(privateKey);
 			const receipt = await wallet.sendTransaction({
 				to: data.sendToAddress,
 				value: ethers.utils.parseEther(data.sendAmount.toString())
 			});
+			console.log(receipt);
 			sendSuccess(data, receipt);
 		} catch (err) {
 			Swal.fire('ERROR', err.message, 'error');
@@ -196,7 +174,7 @@ export default function Index() {
 	};
 
 	const handleSendClick = () => {
-		if (!sendingToken) return Swal.fire('ERROR', 'No token available to transfer', 'error');
+		//if (!sendingToken) return Swal.fire('ERROR', 'No token available to transfer', 'error');
 		if (!sendAmount || !sendToAddress) {
 			return Swal.fire({ title: 'ERROR', icon: 'error', text: 'Send amount and receiver address is required' });
 		}
@@ -204,38 +182,50 @@ export default function Index() {
 	};
 
 	useEffect(() => {
-		const _tokens = getTokenAssets() || [];
-		setTokenAssets(_tokens);
-		//sendingTokenName => Scanned token name
-		if (sendingTokenName) {
-			const found = _tokens.find(item => item.tokenName === sendingTokenName);
-			if (found) {
-				setSendingTokenSymbol(found.symbol);
-				setCurrentBalance(found.tokenBalance);
-			} else {
-				if (sendingTokenName === 'ethereum') {
-					setSendingTokenSymbol(DEFAULT_TOKEN.SYMBOL);
-					setCurrentBalance(ethBalance);
-				} else {
-					setSendingTokenSymbol('');
-					Swal.fire({
-						title: 'Asset not available',
-						text: `Would you like to add ${sendingTokenName} asset now?`,
-						showCancelButton: true,
-						confirmButtonColor: '#3085d6',
-						cancelButtonColor: '#d33',
-						confirmButtonText: 'Yes',
-						cancelButtonText: 'No'
-					}).then(res => {
-						if (res.isConfirmed) history.push('/import-token');
-					});
-				}
+		(async () => {
+			const token = await DataService.getAsset(tokenAddress);
+			if (token) setTokenDetails(token);
+			else {
+				Swal.fire('ERROR', 'Asset not found.', 'error').then(a => {
+					history.push('/assets');
+				});
 			}
-		}
+		})();
+	}, [history, tokenAddress]);
 
-		scannedEthAddress && setSendToAddress(scannedEthAddress);
-		scannedAmount && setSendAmount(scannedAmount);
-	}, [ethBalance, history, privateKey, scannedAmount, scannedEthAddress, sendingTokenName]);
+	// useEffect(() => {
+	// 	const _tokens = [];
+	// 	//setTokenAssets(_tokens);
+	// 	//sendingTokenName => Scanned token name
+	// 	if (true == false && sendingTokenName) {
+	// 		const found = _tokens.find(item => item.tokenName === sendingTokenName);
+	// 		if (found) {
+	// 			setSendingTokenSymbol(found.symbol);
+	// 			setCurrentBalance(found.tokenBalance);
+	// 		} else {
+	// 			if (sendingTokenName === 'ethereum') {
+	// 				setSendingTokenSymbol(DEFAULT_TOKEN.SYMBOL);
+	// 				setCurrentBalance(ethBalance);
+	// 			} else {
+	// 				setSendingTokenSymbol('');
+	// 				Swal.fire({
+	// 					title: 'Asset not available',
+	// 					text: `Would you like to add ${sendingTokenName} asset now?`,
+	// 					showCancelButton: true,
+	// 					confirmButtonColor: '#3085d6',
+	// 					cancelButtonColor: '#d33',
+	// 					confirmButtonText: 'Yes',
+	// 					cancelButtonText: 'No'
+	// 				}).then(res => {
+	// 					if (res.isConfirmed) history.push('/import-token');
+	// 				});
+	// 			}
+	// 		}
+	// 	}
+
+	// 	scannedEthAddress && setSendToAddress(scannedEthAddress);
+	// 	scannedAmount && setSendAmount(scannedAmount);
+	// }, [ethBalance, history, scannedAmount, scannedEthAddress, sendingTokenName]);
 
 	return (
 		<>
@@ -256,13 +246,9 @@ export default function Index() {
 					<div className="section mt-2 mb-5">
 						<div className="wide-block pt-2 pb-2">
 							<div className="alert alert-primary mb-1" role="alert" style={{ fontSize: '1rem' }}>
-								Token Name :{' '}
-								<strong>
-									{sendingTokenName === 'ethereum' && 'Ether'} ({sendingToken})
-								</strong>{' '}
-								<br />
-								Current Balance : <strong>{currentBalance}</strong> <br />
-								Current Network : <strong>{currentNetwork.display}</strong>
+								Token Name : <strong>{tokenDetails && tokenDetails.name}</strong> <br />
+								Current Balance : <strong>{tokenDetails && tokenDetails.balance}</strong> <br />
+								Current Network : <strong>{network && network.display}</strong>
 							</div>
 						</div>
 

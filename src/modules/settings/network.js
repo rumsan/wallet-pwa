@@ -1,23 +1,41 @@
 import React, { useContext, useState, useEffect } from 'react';
 
 import AppHeader from '../layouts/AppHeader';
-import { NETWORKS } from '../../constants/networks';
+import { NETWORKS, getNetworkByName } from '../../constants/networks';
 import { AppContext } from '../../contexts/AppContext';
 import Wallet from '../../utils/blockchain/wallet';
+import DataService from '../../services/db';
 
 export default function Network() {
-	const { changeCurrentNetwork } = useContext(AppContext);
+	const { wallet, setWallet, setNetwork, network } = useContext(AppContext);
 	const [customNetworkUrl, setCustomNetworkUrl] = useState('');
 	const [isCustom, setIsCustom] = useState(false);
 	const [currentNetworkName, setCurrentNetworkName] = useState(null);
 	const [networkUpdateStatus, setNetworkUpdateStatus] = useState('');
 
+	const changeCurrentNetwork = async (name, url) => {
+		let selNetwork = null;
+		if (name === 'custom') {
+			setIsCustom(true);
+			selNetwork = { name: 'custom', url, display: 'Custom Network' };
+		} else {
+			setIsCustom(false);
+			selNetwork = getNetworkByName(name);
+		}
+
+		//setCurrentNetworkName(network);
+		await DataService.saveNetwork(selNetwork);
+		setNetwork(selNetwork);
+		if (wallet) {
+			let newWallet = await Wallet.connectProvider(wallet, selNetwork);
+			setWallet(newWallet);
+		}
+	};
+
 	const handleCustomUrlChange = e => {
 		setCustomNetworkUrl(e.target.value);
-		setTimeout(() => {
-			changeCurrentNetwork('custom', customNetworkUrl);
-			networkUpdateSuccess();
-		}, 4000);
+		changeCurrentNetwork('custom', e.target.value);
+		networkUpdateSuccess();
 	};
 
 	const networkUpdateSuccess = () => {
@@ -26,31 +44,22 @@ export default function Network() {
 
 	const handleNetworkChange = e => {
 		const { value } = e.target;
-		setCurrentNetworkName(value);
-		if (value === 'custom') {
-			setIsCustom(true);
-			return;
-		}
-		setIsCustom(false);
 		changeCurrentNetwork(value);
 		networkUpdateSuccess();
-		setTimeout(() => {
-			setNetworkUpdateStatus('');
-		}, 1000);
 	};
 
-	const fetchCurrentNetwork = () => {
-		const w = new Wallet({});
-		const current = w.fetchCurrentNetwork();
-		const { name, url } = current;
-		if (name === 'custom') {
-			setCustomNetworkUrl(url);
-			setIsCustom(true);
+	useEffect(() => {
+		async function currentNetwork() {
+			let currentNetwork = network || (await DataService.getNetwork());
+			const { name, url } = currentNetwork;
+			if (name === 'custom') {
+				setCustomNetworkUrl(url);
+				setIsCustom(true);
+			}
+			setCurrentNetworkName(name);
 		}
-		setCurrentNetworkName(name);
-	};
-
-	useEffect(fetchCurrentNetwork, []);
+		currentNetwork();
+	}, [network]);
 
 	return (
 		<>

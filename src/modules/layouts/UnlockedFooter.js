@@ -13,15 +13,13 @@ const { SCAN_DELAY, SCANNER_PREVIEW_STYLE, SCANNER_CAM_STYLE } = APP_CONSTANTS;
 
 export default function UnlockedFooter() {
 	let history = useHistory();
-	const { saveScannedAddress, saveSendingTokenName, privateKey } = useContext(AppContext);
+	const { saveScannedAddress, saveSendingTokenName, wallet } = useContext(AppContext);
 	const [scanModal, setScanModal] = useState(false);
 
 	const handleScanModalToggle = () => setScanModal(!scanModal);
 
 	const handleQRLogin = async payload => {
 		try {
-			const w = new Wallet({});
-			const wallet = await w.loadFromPrivateKey(privateKey);
 			const signedData = await wallet.signMessage(payload.token);
 			const { data } = await axios.post(payload.callbackUrl, {
 				id: payload.id,
@@ -113,7 +111,7 @@ export default function UnlockedFooter() {
 							<strong>Home</strong>
 						</div>
 					</Link>
-					<Link to="/tokens" className="item">
+					<Link to="/assets" className="item">
 						<div className="col">
 							<ion-icon name="briefcase-outline" />
 							<strong>Assets</strong>
@@ -129,13 +127,13 @@ export default function UnlockedFooter() {
 					<Link to="/vault" className="item">
 						<div className="col">
 							<ion-icon name="document-outline" />
-							<strong>Vault</strong>
+							<strong>DocVault</strong>
 						</div>
 					</Link>
-					<Link to="/settings" className="item">
+					<Link to="/profile" className="item">
 						<div className="col">
 							<ion-icon name="options-outline" />
-							<strong>Settings</strong>
+							<strong>Profile</strong>
 						</div>
 					</Link>
 				</div>

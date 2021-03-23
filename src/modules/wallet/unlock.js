@@ -3,13 +3,15 @@ import React, { useContext, useState } from 'react';
 import { AppContext } from '../../contexts/AppContext';
 import Loading from '../global/Loading';
 import Wallet from '../../utils/blockchain/wallet';
+import DataService from '../../services/db';
+
 import { useHistory } from 'react-router-dom';
 
 import { APP_CONSTANTS } from '../../constants';
 const { PASSCODE_LENGTH } = APP_CONSTANTS;
 
 export default function Unlock() {
-	const { unlockAppScreen, saveAppWallet } = useContext(AppContext);
+	const { setWallet } = useContext(AppContext);
 	let history = useHistory();
 
 	const [pincode, setPincode] = useState('');
@@ -27,11 +29,10 @@ export default function Unlock() {
 
 	const fetchWalletDataAndUnlock = async passcode => {
 		try {
-			const w = new Wallet({ passcode });
-			const data = await w.load(passcode);
+			let encryptedWallet = await DataService.getWallet();
+			const wallet = await Wallet.loadFromJson(passcode, encryptedWallet);
+			setWallet(wallet);
 			setLoadingModal(false);
-			unlockAppScreen();
-			saveAppWallet(data);
 			history.push('/');
 		} catch (e) {
 			setPincode('');

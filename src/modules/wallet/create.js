@@ -3,11 +3,11 @@ import { useHistory } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
 import { AppContext } from '../../contexts/AppContext';
-import { savePublickey, saveEncyptedWallet } from '../../utils/sessionManager';
+import DataService from '../../services/db';
 
 export default function Create() {
 	let history = useHistory();
-	const { encryptedWallet, address, phrases } = useContext(AppContext);
+	const { wallet } = useContext(AppContext);
 
 	const handleCancelClick = e => {
 		e.preventDefault();
@@ -32,9 +32,12 @@ export default function Create() {
 		}
 	};
 
-	const handleSaveClick = () => {
-		saveEncyptedWallet(encryptedWallet);
-		savePublickey(address);
+	const handleSaveClick = async () => {
+		let encryptedWallet = await DataService.get('temp_encryptedWallet');
+		await DataService.saveWallet(encryptedWallet);
+		DataService.remove('temp_encryptedWallet');
+		DataService.remove('temp_passcode');
+		DataService.saveAddress(wallet.address);
 		return confirmBackup();
 	};
 
@@ -47,8 +50,8 @@ export default function Create() {
 
 				<div className="content-header mb-05">
 					<div className="row">
-						{phrases && phrases.length > 0 ? (
-							phrases.map((word, ind) => {
+						{wallet != null ? (
+							wallet.mnemonic.phrase.split(' ').map((word, ind) => {
 								return (
 									<div key={ind} className="col-sm-3">
 										<div className="form-group boxed">
@@ -73,7 +76,7 @@ export default function Create() {
 				</div>
 
 				<div className="text-center mt-3">
-					{phrases && phrases.length > 0 && (
+					{wallet != null && (
 						<button
 							onClick={handleSaveClick}
 							style={{ margin: 5 }}

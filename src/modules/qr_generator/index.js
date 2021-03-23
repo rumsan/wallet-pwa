@@ -1,44 +1,40 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
 import { useQRCode } from 'react-qrcodes';
-import { ethers } from 'ethers';
+import Blockchain from '../misc/blockchain';
 import { AppContext } from '../../contexts/AppContext';
+import DataService from '../../services/db';
 
-import { getCurrentNetwork } from '../../utils/sessionManager';
-import { getNetworkByName } from '../../constants/networks';
-
-export default function Index({ publicKey }) {
+export default function Index({ address }) {
 	const [balance, setBalance] = useState(0);
-	const [blockchainNetwork, setBlockchainNetwork] = useState(null);
-	const { lockScreen, saveEthBalance } = useContext(AppContext);
+	const [token, setToken] = useState({});
+	const { network, wallet } = useContext(AppContext);
 
-	const fetchCurrentNetwork = () => {
-		let network = getCurrentNetwork();
-		if (!network) network = getNetworkByName();
-		return network;
-	};
+	const fetchMyBalance = useCallback(async () => {
+		if (wallet) {
+			let balance = await Blockchain({ network }).getBalance(address);
+			setBalance(parseFloat(balance).toFixed(2));
+			token.balance = balance;
+			DataService.saveAsset(token);
+		}
+	}, [address, network, token, wallet]);
 
-	const fetchMyBalance = () => {
-		const network = fetchCurrentNetwork();
-		setBlockchainNetwork(network);
-		const { url } = network;
-		const provider = new ethers.providers.JsonRpcProvider(url);
-		provider
-			.getBalance(publicKey)
-			.then(balance => {
-				const myBalance = ethers.utils.formatEther(balance);
-				saveEthBalance(myBalance);
-				setBalance(myBalance);
-			})
-			.catch(err => {
-				console.log('ERR:', err);
-				setBalance(0);
-			});
-	};
+	useEffect(() => {
+		(async () => {
+			let dtoken = await DataService.getAsset('default');
+			setBalance(parseFloat(dtoken.balance).toFixed(2));
+			setToken(dtoken);
+		})();
+	}, []);
 
-	useEffect(fetchMyBalance, []);
+	useEffect(() => {
+		const interval = setInterval(() => {
+			fetchMyBalance();
+		}, 10000);
+		return () => clearInterval(interval);
+	}, [fetchMyBalance]);
 
 	const [inputRef] = useQRCode({
-		text: `${publicKey ? 'ethereum:' + publicKey : ''}`,
+		text: `${address ? 'ethereum:' + address : ''}`,
 		options: {
 			level: 'M',
 			margin: 7,
@@ -54,18 +50,18 @@ export default function Index({ publicKey }) {
 					<canvas ref={inputRef} />
 				</div>
 				<div className="card-body text-center" style={{ marginTop: '-25px' }}>
-					<h5 className="card-text infoAddress text-bold">{publicKey}</h5>
+					<h5 className="card-text infoAddress text-bold">{address}</h5>
 					<small style={{ fontSize: 10 }}>
 						Scan the QR Code or use the address to receive tokens to your account.
 					</small>
 				</div>
-				{!lockScreen && (
+				{wallet && (
 					<div className="card-footer">
 						<div className="row">
 							<div className="col">
 								<small>
 									<span className="infoNetwork" style={{ fontStyle: 'italic' }}>
-										{blockchainNetwork && blockchainNetwork.display}
+										{network && network.display}
 									</span>
 								</small>
 							</div>
