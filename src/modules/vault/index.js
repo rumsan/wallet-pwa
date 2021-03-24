@@ -101,6 +101,7 @@ export default function Index() {
 	const saveDocument = async hash => {
 		let payload = {
 			hash,
+			type: 'general',
 			name: documentName,
 			file: blobFile,
 			createdAt: Date.now()
@@ -133,7 +134,7 @@ export default function Index() {
 	}
 
 	const handleRemoveDocClick = () => {
-		console.log('HELLO');
+		console.log('Not Implemented: remove from ipfs and indexedDB');
 	};
 
 	useEffect(() => {

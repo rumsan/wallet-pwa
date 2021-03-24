@@ -30,7 +30,7 @@ export default function Index() {
 			if (token.address === 'default') {
 				token.balance = await Blockchain({ network }).getBalance(address);
 			} else {
-				const contract = Contract({ wallet, address: token.address, type: 'erc20' }).get();
+				const contract = Contract({ wallet, address: token.address, type: token.type }).get();
 				const tokenBalance = await contract.balanceOf(address);
 				token.balance = tokenBalance.toNumber();
 			}

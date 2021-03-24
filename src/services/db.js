@@ -6,8 +6,8 @@ import { getDefaultNetwork } from '../constants/networks';
 const db = new Dexie(DB.NAME);
 db.version(DB.VERSION).stores({
 	data: 'name,data',
-	documents: 'hash,name,file,createdAt',
-	assets: 'address,name,symbol,decimal,balance,network'
+	documents: 'hash,type,name,file,createdAt',
+	assets: 'address,type,name,symbol,decimal,balance,network'
 });
 
 export default {

@@ -3,7 +3,7 @@ import appReduce from '../reducers/appReducer';
 import APP_ACTIONS from '../actions/appActions';
 import { saveTokenAssets } from '../utils/sessionManager';
 import DataService from '../services/db';
-import { DEFAULT_TOKEN } from '../constants';
+import { APP_CONSTANTS, DEFAULT_TOKEN } from '../constants';
 
 const initialState = {
 	ethBalance: '',
@@ -22,6 +22,8 @@ export const AppContextProvider = ({ children }) => {
 
 	const initApp = useCallback(async () => {
 		DataService.addDefaultAsset(DEFAULT_TOKEN.SYMBOL, DEFAULT_TOKEN.NAME);
+		//TODO: in future check version and add action if the version is different.
+		DataService.save('version', APP_CONSTANTS.VERSION);
 		let data = await DataService.initAppData();
 		data.hasWallet = data.wallet === null ? false : true;
 		if (!data.hasWallet) localStorage.removeItem('address');

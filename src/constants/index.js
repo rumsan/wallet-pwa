@@ -1,5 +1,6 @@
 module.exports = {
 	APP_CONSTANTS: {
+		VERSION: 1,
 		PASSCODE_LENGTH: 6,
 		SCAN_DELAY: 600,
 		SCANNER_PREVIEW_STYLE: {

@@ -152,7 +152,7 @@ export default function Index(props) {
 
 	const sendERCToken = async () => {
 		try {
-			const tokenContract = Contract({ wallet, address: tokenDetails.address, type: 'erc20' }).get();
+			const tokenContract = Contract({ wallet, address: tokenDetails.address, type: tokenDetails.type }).get();
 			await tokenContract.transfer(sendToAddress, sendAmount);
 			sendERCSuccess(sendAmount, sendToAddress);
 		} catch (err) {

@@ -40,12 +40,13 @@ export default function ImportToken() {
 			if (!wallet) throw Error('Please unlock the wallet first.');
 			const tokenContract = Contract({ wallet, address: contractAddress, type: 'erc20' }).get();
 
-			const name = await tokenContract.name();
 			const symbol = await tokenContract.symbol();
+			const name = await tokenContract.name();
 			const decimal = await tokenContract.decimals();
 			const balance = await tokenContract.balanceOf(address);
 			setToken({
 				address: contractAddress,
+				type: 'erc20',
 				name,
 				symbol,
 				decimal,
@@ -56,14 +57,14 @@ export default function ImportToken() {
 			setLoading(false);
 		} catch (err) {
 			setLoading(false);
-			setToken({ address: '', name: '', symbol: '', decimal: '', balance: '', network: null });
+			setToken({ address: '', name: '', symbol: '', type: '', decimal: '', balance: '', network: null });
 			Swal.fire('ERROR', err.message, 'error');
 		}
 	};
 
 	const handleClickAddToken = async () => {
 		await DataService.addMultiAssets(token);
-		setToken({ address: '', name: '', symbol: '', decimal: '', balance: '', network: null });
+		setToken({ address: '', name: '', symbol: '', type: '', decimal: '', balance: '', network: null });
 		history.push('/assets');
 	};
 
