@@ -2,11 +2,9 @@ import React, { useEffect, useState, useContext } from 'react';
 import AppHeader from '../layouts/AppHeader';
 import EtherImg from '../../assets/images/ether.png';
 import { useHistory } from 'react-router-dom';
-import { DEFAULT_TOKEN } from '../../constants';
 import DataService from '../../services/db';
 
 import { AppContext } from '../../contexts/AppContext';
-const ETHER_NETWORK = 'ethereum';
 
 export default function Details(props) {
 	let history = useHistory();

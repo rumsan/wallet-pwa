@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import Swal from 'sweetalert2';
 import { useHistory } from 'react-router-dom';
 

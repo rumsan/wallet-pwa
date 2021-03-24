@@ -49,7 +49,6 @@ export default function GoogleRestore() {
 	const [selectedWallet, setSelectedWallet] = useState({});
 
 	const [currentAction, setCurrentAction] = useState({});
-	const [dbContext, setDbContext] = useState(null);
 
 	const changeAction = hash => {
 		setErrorMsg(null);
@@ -59,7 +58,6 @@ export default function GoogleRestore() {
 	};
 
 	const loadGapiClient = () => {
-		setDbContext(DataService);
 		history.listen(location => {
 			changeAction(location.hash);
 		});

@@ -93,7 +93,7 @@ export default function Index() {
 						) : (
 							<div style={{ padding: 20 }}>
 								<span>
-									<small>Your assets will appear here...</small>
+									<small test={ethBalance}>Your assets will appear here...</small>
 								</span>
 							</div>
 						)}

@@ -7,7 +7,6 @@ import axios from 'axios';
 import ModalWrapper from '../global/ModalWrapper';
 import { AppContext } from '../../contexts/AppContext';
 import { APP_CONSTANTS } from '../../constants';
-import Wallet from '../../utils/blockchain/wallet';
 
 const { SCAN_DELAY, SCANNER_PREVIEW_STYLE, SCANNER_CAM_STYLE } = APP_CONSTANTS;
 
