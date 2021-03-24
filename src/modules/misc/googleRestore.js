@@ -9,6 +9,7 @@ import DataService from '../../services/db';
 import { BACKUP } from '../../constants';
 import { GFile, GFolder } from '../../utils/google';
 import Loading from '../global/Loading';
+import Swal from 'sweetalert2';
 
 //const { PASSCODE_LENGTH } = APP_CONSTANTS;
 
@@ -99,6 +100,17 @@ export default function GoogleRestore() {
 	};
 
 	const fetchWalletList = async () => {
+		let existingWallet = await DataService.getWallet();
+		if (existingWallet) {
+			Swal.fire(
+				'Warning',
+				'You have already setup a wallet. Please backup and remove it before restoring another wallet from Google Drive.',
+				'warning'
+			).then(d => {
+				history.push('/');
+			});
+			return;
+		}
 		history.push('#choose-wallet');
 		setLoading('Querying Google Drive for wallet backups. Please wait...');
 		const gFolder = new GFolder(gapi);
@@ -134,12 +146,17 @@ export default function GoogleRestore() {
 		setErrorMsg(null);
 		setLoading('Unlocking and restoring wallet.');
 		try {
-			DataService.saveWallet(JSON.stringify(selectedWallet.data.wallet));
-			const wallet = await Wallet.loadFromJson(passphrase, JSON.stringify(selectedWallet.data.wallet));
+			const passcode = await DataService.get('temp_passcode');
+			const wallet = await Wallet.loadFromJson(passphrase, selectedWallet.data.wallet);
+			const passcodeWallet = await wallet.encrypt(passcode);
+			await DataService.clearAll();
+			await DataService.saveWallet(passcodeWallet);
 			await DataService.saveAddress(wallet.address);
+			await DataService.save('backup_wallet', selectedWallet.data.wallet);
 			if (selectedWallet.data.documents) await DataService.saveDocuments(selectedWallet.data.documents);
 			if (selectedWallet.data.assets) await DataService.addMultiAssets(selectedWallet.data.assets);
 			setWallet(wallet);
+			await DataService.remove('temp_passcode');
 			history.push('/');
 		} catch (e) {
 			console.log(e);
@@ -184,7 +201,7 @@ export default function GoogleRestore() {
 						</button>
 					)}
 				</div>
-				<div className="pageTitle">Wallet Setup</div>
+				<div className="pageTitle">Restore wallet from Google Drive</div>
 				<div className="right">
 					<Link to="/" className="headerButton">
 						<ion-icon

@@ -4,6 +4,7 @@ import DataService from '../../services/db';
 
 export default function ImportToken() {
 	const [ipfs, setIpfs] = useState(null);
+	const [ipfsDownload, setIpfsDownload] = useState(null);
 
 	const changeIpfs = async e => {
 		const { value } = e.target;
@@ -12,11 +13,18 @@ export default function ImportToken() {
 		else DataService.saveIpfsUrl(null);
 	};
 
+	const changeIpfsDownload = async e => {
+		const { value } = e.target;
+		setIpfsDownload(value);
+		if (value.length > 5) DataService.saveIpfsDownloadUrl(value);
+		else DataService.saveIpfsDownloadUrl(null);
+	};
+
 	useEffect(() => {
 		(async () => {
-			let ipfsUrl = await DataService.getIpfsUrl();
-			console.log(process.env.REACT_APP_DEFAULT_IPFS);
+			let { ipfsUrl, ipfsDownloadUrl } = await DataService.getIpfs();
 			setIpfs(ipfsUrl);
+			setIpfsDownload(ipfsDownloadUrl);
 		})();
 	}, []);
 
@@ -35,9 +43,23 @@ export default function ImportToken() {
 											<input
 												type="text"
 												className="form-control"
-												placeholder="Enter full IPFS url"
+												placeholder="Enter full IPFS url (eg: http://localhost:5001)"
 												value={ipfs}
 												onChange={changeIpfs}
+											/>
+										</div>
+									</div>
+								</div>
+								<div className="form-group boxed" style={{ padding: 0 }}>
+									<div className="input-wrapper">
+										<label className="label">IPFS Download Url:</label>
+										<div className="input-group mb-3">
+											<input
+												type="text"
+												className="form-control"
+												placeholder="Enter IPFS download url (eg: http://localhost:8080/ipfs)"
+												value={ipfsDownload}
+												onChange={changeIpfsDownload}
 											/>
 										</div>
 									</div>

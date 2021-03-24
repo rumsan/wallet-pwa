@@ -3,7 +3,6 @@ import { BrowserRouter, Switch, Route } from 'react-router-dom';
 
 import Home from '../modules/home';
 import UnlockWallet from '../modules/wallet/unlock';
-import GoogleBackup from '../modules/misc/googleBackup';
 import GoogleRestore from '../modules/misc/googleRestore';
 import CreateWallet from '../modules/wallet/create';
 import RestoreFromMnemonic from '../modules/wallet/restoreMnemonic';
@@ -18,7 +17,6 @@ function App() {
 					<Switch>
 						<Route exact path="/create" component={CreateWallet} />
 						<Route exact path="/unlock" component={UnlockWallet} />
-						<Route exact path="/google/backup" component={GoogleBackup} />
 						<Route exact path="/google/restore" component={GoogleRestore} />
 						<Route exact path="/mnemonic/restore" component={RestoreFromMnemonic} />
 						<Route path="/" component={Home} />

@@ -17,6 +17,7 @@ import Transfer from '../transfer';
 import Assets from '../tokens';
 import TokenDetails from '../tokens/details';
 import Vault from '../vault';
+import GoogleBackup from '../misc/googleBackup';
 
 function App() {
 	const { initApp, wallet } = useContext(AppContext);
@@ -42,6 +43,7 @@ function App() {
 				<PrivateRoute exact path="/assets/:address" component={TokenDetails} wallet={wallet} />
 				<PrivateRoute exact path="/transfer/:address" component={Transfer} wallet={wallet} />
 				<PrivateRoute exact path="/vault" component={Vault} wallet={wallet} />
+				<PrivateRoute exact path="/google/backup" component={GoogleBackup} wallet={wallet} />
 			</Switch>
 			<Footer />
 		</>

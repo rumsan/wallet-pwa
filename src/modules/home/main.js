@@ -42,6 +42,10 @@ export default function Main() {
 			setCurrentAction('restore_wallet');
 			setLoadingMessage('Restoring your wallet. Please wait...');
 		}
+		if (modalName === 'restoreFromGdrive') {
+			setCurrentAction('restore_gdrive');
+			setLoadingMessage('Restoring your wallet. Please wait...');
+		}
 	};
 
 	const handlePasscodeChange = e => {
@@ -59,6 +63,10 @@ export default function Main() {
 			if (currentAction === 'restore_wallet') {
 				await DataService.save('temp_passcode', value);
 				history.push('/mnemonic/restore');
+			}
+			if (currentAction === 'restore_gdrive') {
+				await DataService.save('temp_passcode', value);
+				history.push('/google/restore');
 			}
 			if (currentAction === 'setup_wallet') setShowWalletActions(true);
 			return;
@@ -81,11 +89,6 @@ export default function Main() {
 			Swal.fire('ERROR', err.message, 'error');
 			setLoadingModal(false);
 		}
-	};
-
-	const handleGoogleRestoreClick = e => {
-		e.preventDefault();
-		history.push('/google/restore');
 	};
 
 	return (
@@ -180,12 +183,7 @@ export default function Main() {
 									</h4>
 								)}
 							</div>
-							{!hasWallet && (
-								<SetupButton
-									handleGoogleRestoreClick={handleGoogleRestoreClick}
-									togglePasscodeModal={togglePasscodeModal}
-								/>
-							)}
+							{!hasWallet && <SetupButton togglePasscodeModal={togglePasscodeModal} />}
 						</div>
 					)}
 				</div>

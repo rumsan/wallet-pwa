@@ -166,7 +166,6 @@ export default function Index(props) {
 				to: data.sendToAddress,
 				value: ethers.utils.parseEther(data.sendAmount.toString())
 			});
-			console.log(receipt);
 			sendSuccess(data, receipt);
 		} catch (err) {
 			Swal.fire('ERROR', err.message, 'error');
@@ -174,7 +173,6 @@ export default function Index(props) {
 	};
 
 	const handleSendClick = () => {
-		//if (!sendingToken) return Swal.fire('ERROR', 'No token available to transfer', 'error');
 		if (!sendAmount || !sendToAddress) {
 			return Swal.fire({ title: 'ERROR', icon: 'error', text: 'Send amount and receiver address is required' });
 		}

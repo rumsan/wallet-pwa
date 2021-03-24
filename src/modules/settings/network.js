@@ -25,6 +25,7 @@ export default function Network() {
 
 		//setCurrentNetworkName(network);
 		await DataService.saveNetwork(selNetwork);
+		await DataService.updateAsset('default', { balance: 0 });
 		setNetwork(selNetwork);
 		if (wallet) {
 			let newWallet = await Wallet.connectProvider(wallet, selNetwork);

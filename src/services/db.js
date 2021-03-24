@@ -25,11 +25,21 @@ export default {
 		return db.data.delete(name);
 	},
 
+	list() {
+		return db.data.toArray();
+	},
+
 	async initAppData() {
 		let network = await this.getNetwork();
 		let address = await this.getAddress();
 		let wallet = await this.getWallet();
 		return { network, address, wallet };
+	},
+
+	async clearAll() {
+		await db.data.clear();
+		await db.assets.clear();
+		await db.documents.clear();
 	},
 
 	saveNetwork(network) {
@@ -42,14 +52,20 @@ export default {
 		return network;
 	},
 
+	async getIpfs() {
+		let ipfsUrl = await this.get('ipfsUrl');
+		if (!ipfsUrl) ipfsUrl = process.env.REACT_APP_DEFAULT_IPFS;
+		let ipfsDownloadUrl = await this.get('ipfsUrlDownload');
+		if (!ipfsDownloadUrl) ipfsDownloadUrl = process.env.REACT_APP_DEFAULT_IPFS_DOWNLOAD;
+		return { ipfsUrl, ipfsDownloadUrl };
+	},
+
 	saveIpfsUrl(ipfsUrl) {
 		return this.save('ipfsUrl', ipfsUrl);
 	},
 
-	async getIpfsUrl() {
-		let ipfs = await this.get('ipfsUrl');
-		if (!ipfs) return process.env.REACT_APP_DEFAULT_IPFS;
-		return ipfs;
+	saveIpfsDownloadUrl(ipfsDownloadUrl) {
+		return this.save('ipfsUrlDownload', ipfsDownloadUrl);
 	},
 
 	saveAddress(address) {
@@ -66,7 +82,6 @@ export default {
 	},
 
 	async saveWallet(wallet) {
-		console.log(wallet);
 		return this.save('wallet', wallet);
 	},
 
@@ -81,6 +96,10 @@ export default {
 
 	getDocument(hash) {
 		return db.documents.get(hash);
+	},
+
+	async updateDocument(key, data) {
+		return db.documents.update(key, data);
 	},
 
 	listDocuments() {

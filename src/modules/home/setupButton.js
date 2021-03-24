@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function SetupButton({ handleGoogleRestoreClick, togglePasscodeModal }) {
+export default function SetupButton({ togglePasscodeModal }) {
 	return (
 		<>
 			<div className="card-body text-center">
@@ -35,7 +35,7 @@ export default function SetupButton({ handleGoogleRestoreClick, togglePasscodeMo
 
 					<div className="col-md-12 pr-3 pl-3">
 						<button
-							onClick={handleGoogleRestoreClick}
+							onClick={() => togglePasscodeModal('restoreFromGdrive')}
 							id="btnSetupWallet"
 							type="button"
 							className="btn btn-block btn-success mb-2"

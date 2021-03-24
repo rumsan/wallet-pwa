@@ -18,6 +18,7 @@ module.exports = {
 		}
 	},
 	BACKUP: {
+		PASSPHRASE_RULE: '"^(?=.*[a-zA-Z])(?=.*[0-9])(?=.{12,})"',
 		GDRIVE_FOLDERNAME: 'RumsanWalletBackups'
 	},
 	DB: {

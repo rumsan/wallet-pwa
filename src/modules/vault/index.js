@@ -54,7 +54,7 @@ export default function Index() {
 
 	const handleDocumentSubmit = async e => {
 		e.preventDefault();
-		const ipfsUrl = await DataService.getIpfsUrl();
+		const { ipfsUrl } = await DataService.getIpfs();
 		const ipfs = IPFS_CLIENT(ipfsUrl);
 		const file = dataURLtoFile(previewImage);
 		ipfs.add(file)
@@ -137,11 +137,30 @@ export default function Index() {
 		console.log('Not Implemented: remove from ipfs and indexedDB');
 	};
 
+	const getFileBlob = async url => {
+		const response = await fetch(url);
+		return response.blob();
+	};
+
+	setTimeout(async () => {
+		let documents = await DataService.listDocuments();
+		let { ipfsDownloadUrl } = await DataService.getIpfs();
+		for (let doc of documents) {
+			if (!doc.file) {
+				let file = await getFileBlob(ipfsDownloadUrl + '/' + doc.hash);
+				await DataService.updateDocument(doc.hash, { file });
+				console.info('Downloaded file: ' + doc.hash);
+			}
+		}
+	}, 2000);
+
 	useEffect(() => {
 		(async () => {
 			let documents = await DataService.listDocuments();
+			let { ipfsDownloadUrl } = await DataService.getIpfs();
 			for (let doc of documents) {
-				doc.file = await blobToBase64(doc.file);
+				if (doc.file) doc.file = await blobToBase64(doc.file);
+				else doc.file = ipfsDownloadUrl + '/' + doc.hash;
 			}
 			setMyDocuments(documents);
 		})();
@@ -233,7 +252,7 @@ export default function Index() {
 					</button>
 				</div>
 			</ModalWrapper>
-			<AppHeader currentMenu="Vault" />
+			<AppHeader currentMenu="DocVault" />
 			<div id="appCapsule">
 				<div className="container">
 					<div className="section full mt-2">
