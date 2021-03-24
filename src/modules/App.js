@@ -5,6 +5,7 @@ import Home from '../modules/home';
 import UnlockWallet from '../modules/wallet/unlock';
 import GoogleRestore from '../modules/misc/googleRestore';
 import CreateWallet from '../modules/wallet/create';
+import ResetWallet from '../modules/misc/reset';
 import RestoreFromMnemonic from '../modules/wallet/restoreMnemonic';
 
 import { AppContextProvider } from '../contexts/AppContext';
@@ -19,6 +20,7 @@ function App() {
 						<Route exact path="/unlock" component={UnlockWallet} />
 						<Route exact path="/google/restore" component={GoogleRestore} />
 						<Route exact path="/mnemonic/restore" component={RestoreFromMnemonic} />
+						<Route exact path="/reset" component={ResetWallet} />
 						<Route path="/" component={Home} />
 					</Switch>
 				</BrowserRouter>

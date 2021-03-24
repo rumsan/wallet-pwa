@@ -1,7 +1,6 @@
 import React, { createContext, useReducer, useCallback } from 'react';
 import appReduce from '../reducers/appReducer';
 import APP_ACTIONS from '../actions/appActions';
-import { saveTokenAssets } from '../utils/sessionManager';
 import DataService from '../services/db';
 import { APP_CONSTANTS, DEFAULT_TOKEN } from '../constants';
 
@@ -46,10 +45,6 @@ export const AppContextProvider = ({ children }) => {
 		dispatch({ type: APP_ACTIONS.SET_SCCANNED_DATA, data });
 	}
 
-	function saveTokens(tokens) {
-		if (tokens.length) saveTokenAssets(tokens);
-	}
-
 	function saveSendingTokenName(symbol) {
 		dispatch({ type: APP_ACTIONS.SET_SENDING_TOKEN_NAME, data: symbol });
 	}
@@ -72,7 +67,6 @@ export const AppContextProvider = ({ children }) => {
 				initApp,
 				saveSendingTokenName,
 				saveScannedAddress,
-				saveTokens,
 				saveEthBalance,
 				setHasWallet,
 				setNetwork,
