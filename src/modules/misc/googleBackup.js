@@ -28,7 +28,7 @@ export default function GoogleBackup() {
 		{
 			hash: '#enter-passphrase',
 			label:
-				'Please enter backup passphrase. It must be at least 12 characters long with one number and alphabet. Button will appear after you type 12 characters. <br />PLEASE NOTE: THIS IS DIFFERENT THAN YOUR 6-DIGIT PASSCODE.'
+				'Please enter backup passphrase. It must be at least 10 characters long with one number and alphabet. Button will appear after you type 12 characters. <br />PLEASE NOTE: THIS IS DIFFERENT THAN YOUR 6-DIGIT PASSCODE.'
 		}
 	];
 
@@ -97,7 +97,7 @@ export default function GoogleBackup() {
 
 	const checkAndSetPassphrase = value => {
 		setErrorMsg(null);
-		var strongRegex = new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{12,})');
+		var strongRegex = new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{10,})');
 		var mediumRegex = new RegExp(
 			'^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,})'
 		);
@@ -168,11 +168,11 @@ export default function GoogleBackup() {
 	};
 
 	const confirmBackup = async () => {
-		var passPhraseRegex = new RegExp('^(?=.*[a-zA-Z])(?=.*[0-9])(?=.{12,})');
+		var passPhraseRegex = new RegExp('^(?=.*[a-zA-Z])(?=.*[0-9])(?=.{10,})');
 		if (!passPhraseRegex.test(passphrase)) {
 			Swal.fire(
 				'Passphrase incorrect',
-				'Passphrase must be 12 characters and have at least one number.',
+				'Passphrase must be 10 characters and have at least one number.',
 				'error'
 			);
 			return;
@@ -294,7 +294,7 @@ export default function GoogleBackup() {
 										<small>
 											Passphrase length: <b>{passphrase.length}</b>. Strength:{' '}
 											<b>{passphraseStrength}</b>
-											<br />A strong passphrase should be at least 12-charater long and contain at
+											<br />A strong passphrase should be at least 10-charater long and contain at
 											least one lowercase alphabet, one uppercase alphabet, one number and a
 											special character
 										</small>
@@ -304,7 +304,7 @@ export default function GoogleBackup() {
 						</div>
 
 						<div className="text-center mt-3">
-							{passphrase.length > 11 && (
+							{passphrase.length > 9 && (
 								<button className="btn btn-primary" onClick={e => confirmBackup()}>
 									Continue to backup your wallet
 								</button>

@@ -22,6 +22,7 @@ function App() {
 						<Route exact path="/mnemonic/restore" component={RestoreFromMnemonic} />
 						<Route exact path="/reset" component={ResetWallet} />
 						<Route path="/" component={Home} />
+						<Route path="*" component={Home} />
 					</Switch>
 				</BrowserRouter>
 			</AppContextProvider>

@@ -28,12 +28,6 @@ export default (state, action) => {
 				hasWallet: action.data
 			};
 
-		case APP_ACTIONS.SET_ETH_BALANCE:
-			return {
-				...state,
-				ethBalance: action.data
-			};
-
 		case APP_ACTIONS.SET_SCCANNED_DATA:
 			return {
 				...state,

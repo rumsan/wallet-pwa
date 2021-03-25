@@ -18,7 +18,8 @@ export default function Index(props) {
 	const { saveScannedAddress, saveSendingTokenName, network, wallet } = useContext(AppContext);
 	let history = useHistory();
 
-	let tokenAddress = props.match.params.address;
+	let tokenAddress = props.match.params.contract;
+	let address = props.match.params.address;
 
 	const [tokenDetails, setTokenDetails] = useState(null);
 
@@ -181,6 +182,7 @@ export default function Index(props) {
 
 	useEffect(() => {
 		(async () => {
+			if (address) setSendToAddress(address);
 			const token = await DataService.getAsset(tokenAddress);
 			if (token) setTokenDetails(token);
 			else {
@@ -189,7 +191,7 @@ export default function Index(props) {
 				});
 			}
 		})();
-	}, [history, tokenAddress]);
+	}, [address, history, tokenAddress]);
 
 	// useEffect(() => {
 	// 	const _tokens = [];

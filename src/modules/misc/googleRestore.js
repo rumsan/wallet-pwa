@@ -78,6 +78,9 @@ export default function GoogleRestore() {
 			.then(function () {
 				gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
 				updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+			})
+			.catch(e => {
+				alert(e.message);
 			});
 	};
 
@@ -330,7 +333,7 @@ export default function GoogleRestore() {
 						</div>
 
 						<div className="text-center mt-3">
-							{passphrase.length > 1 && (
+							{passphrase.length > 4 && (
 								<button
 									className="btn btn-primary"
 									id="btnMnemonic"

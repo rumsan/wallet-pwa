@@ -7,12 +7,13 @@ import axios from 'axios';
 import ModalWrapper from '../global/ModalWrapper';
 import { AppContext } from '../../contexts/AppContext';
 import { APP_CONSTANTS } from '../../constants';
+import DataService from '../../services/db';
 
 const { SCAN_DELAY, SCANNER_PREVIEW_STYLE, SCANNER_CAM_STYLE } = APP_CONSTANTS;
 
 export default function UnlockedFooter() {
 	let history = useHistory();
-	const { saveScannedAddress, saveSendingTokenName, wallet } = useContext(AppContext);
+	const { saveScannedAddress, wallet, network } = useContext(AppContext);
 	const [scanModal, setScanModal] = useState(false);
 
 	const handleScanModalToggle = () => setScanModal(!scanModal);
@@ -46,7 +47,7 @@ export default function UnlockedFooter() {
 		return true;
 	};
 
-	const handlScanSuccess = data => {
+	const handlScanSuccess = async data => {
 		let loginPayload = null;
 		if (data) {
 			const isJsonStr = isJsonString(data);
@@ -62,32 +63,24 @@ export default function UnlockedFooter() {
 						history.push('/select-token');
 						return;
 					}
-					let properties = data.split(',');
-					let obj = {};
-					properties.forEach(function (property) {
-						let tup = property.split(':');
-						const keyName = tup[0].trim();
-						const value = tup[1].trim();
-						obj[keyName] = value;
-					});
-					const tokenName = Object.getOwnPropertyNames(obj)[0];
-					obj.address = obj[tokenName];
-					saveTokenNameToCtx(tokenName);
-					saveScannedAddress(obj);
+					if (data.indexOf(':') === -1) throw Error('This QR Code is not supported by Rumsan Wallet.');
+
+					let properties = data.split(':');
+					let symbol = properties[0] === 'ethereum' ? 'ETH' : properties[0];
+					let token = await DataService.getAssetBySymbol(symbol, network.name);
+					if (!token)
+						throw Error(
+							`Token with symbol ${symbol} does not exist in your asset library. Please add asset and try again.`
+						);
 					handleScanModalToggle();
-					history.push('/transfer');
+					history.push(`/transfer/${token.address}/${properties[1]}`);
 				} catch (err) {
 					console.log('ERR:', err);
 					handleScanModalToggle();
-					Swal.fire('ERROR', 'Invalid wallet address!', 'error');
+					Swal.fire('ERROR', err.message, 'error');
 				}
 			}
 		}
-	};
-
-	const saveTokenNameToCtx = tokenName => {
-		if (tokenName === 'ethereum') saveSendingTokenName('ethereum');
-		else saveSendingTokenName(tokenName);
 	};
 
 	return (

@@ -1,15 +1,34 @@
-import React from 'react';
+import React, { useContext, useState } from 'react';
 import { useHistory } from 'react-router-dom';
+
+import Loading from '../global/Loading';
+import Wallet from '../../utils/blockchain/wallet';
+import DataService from '../../services/db';
+import { AppContext } from '../../contexts/AppContext';
 
 export default function LockedFooter() {
 	let history = useHistory();
+	const { setWallet } = useContext(AppContext);
+	const [loadingModal, setLoadingModal] = useState(false);
 
-	const handleUnlockClick = () => {
-		history.push('/unlock');
+	const handleUnlockClick = async () => {
+		// let test = Math.random();
+		// await DataService.test('cool', test);
+		// console.log(test);
+		setLoadingModal(true);
+		let encryptedWallet = await DataService.getWallet();
+		const wallet = await Wallet.loadFromPrivateKey(
+			'0xea9be389aa0c8dd3907fdb1f004ff7dcc18719654077e1f316099c6e588a39aa'
+		);
+		//const wallet = await Wallet.loadFromJson('967967', encryptedWallet);
+		setWallet(wallet);
+		setLoadingModal(false);
+		history.push('/');
 	};
 
 	return (
 		<>
+			<Loading message="Unlocking your wallet. Please wait..." showModal={loadingModal} />
 			<div className="footer-locked">
 				<div className="appBottomMenu">
 					<a href="#target" className="item">

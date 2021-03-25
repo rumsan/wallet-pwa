@@ -5,7 +5,6 @@ import DataService from '../services/db';
 import { APP_CONSTANTS, DEFAULT_TOKEN } from '../constants';
 
 const initialState = {
-	ethBalance: '',
 	sendingTokenName: '',
 	address: null,
 	network: null,
@@ -49,14 +48,9 @@ export const AppContextProvider = ({ children }) => {
 		dispatch({ type: APP_ACTIONS.SET_SENDING_TOKEN_NAME, data: symbol });
 	}
 
-	function saveEthBalance(balance) {
-		dispatch({ type: APP_ACTIONS.SET_ETH_BALANCE, data: balance });
-	}
-
 	return (
 		<AppContext.Provider
 			value={{
-				ethBalance: state.ethBalance,
 				address: state.address,
 				scannedEthAddress: state.scannedEthAddress,
 				scannedAmount: state.scannedAmount,
@@ -67,7 +61,6 @@ export const AppContextProvider = ({ children }) => {
 				initApp,
 				saveSendingTokenName,
 				saveScannedAddress,
-				saveEthBalance,
 				setHasWallet,
 				setNetwork,
 				setWallet,

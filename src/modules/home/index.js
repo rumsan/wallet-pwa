@@ -8,6 +8,7 @@ import BackupWallet from '../wallet/backup/index';
 import Footer from '../layouts/Footer';
 import Header from '../layouts/Header';
 import ImportToken from '../tokens/importToken';
+import SelectTokens from '../tokens/selectTokens';
 import Main from './main';
 import NetworkSettings from '../settings/network';
 import Profile from '../settings';
@@ -35,13 +36,16 @@ function App() {
 				<PrivateRoute exact path="/backup" component={BackupWallet} wallet={wallet} />
 				<PrivateRoute exact path="/networks" component={NetworkSettings} wallet={wallet} />
 				<PrivateRoute exact path="/import-token" component={ImportToken} wallet={wallet} />
+				<PrivateRoute exact path="/select-token" component={SelectTokens} wallet={wallet} />
 				<PrivateRoute exact path="/profile" component={Profile} wallet={wallet} />
 				<PrivateRoute exact path="/settings" component={Settings} wallet={wallet} />
 				<PrivateRoute exact path="/assets" component={Assets} wallet={wallet} />
 				<PrivateRoute exact path="/assets/:address" component={TokenDetails} wallet={wallet} />
-				<PrivateRoute exact path="/transfer/:address" component={Transfer} wallet={wallet} />
+				<PrivateRoute exact path="/transfer/:contract" component={Transfer} wallet={wallet} />
+				<PrivateRoute exact path="/transfer/:contract/:address" component={Transfer} wallet={wallet} />
 				<PrivateRoute exact path="/vault" component={Vault} wallet={wallet} />
 				<PrivateRoute exact path="/google/backup" component={GoogleBackup} wallet={wallet} />
+				<Route path="*" component={Main} />
 			</Switch>
 			<Footer />
 		</>
