@@ -80,7 +80,7 @@ export default function GoogleRestore() {
 				updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
 			})
 			.catch(e => {
-				alert(e.message);
+				alert('test');
 			});
 	};
 
