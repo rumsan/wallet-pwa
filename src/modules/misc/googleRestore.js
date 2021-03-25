@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link, useHistory, Redirect } from 'react-router-dom';
 import { gapi } from 'gapi-script';
-import Wallet from '../../utils/blockchain/wallet';
 
+import Wallet from '../../utils/blockchain/wallet';
+import UserImg from '../../assets/images/user.svg';
 import { AppContext } from '../../contexts/AppContext';
 import DataService from '../../services/db';
-
 import { BACKUP } from '../../constants';
 import { GFile, GFolder } from '../../utils/google';
 import Loading from '../global/Loading';
@@ -41,9 +41,9 @@ export default function GoogleRestore() {
 	const [errorMsg, setErrorMsg] = useState(null);
 	const [gUser, setGUser] = useState({
 		id: null,
-		name: 'Loading User...',
+		name: 'Loading Users...',
 		email: null,
-		image: 'http://www.pngall.com/wp-content/uploads/5/Profile-PNG-Images.png'
+		image: UserImg
 	});
 	const [passphrase, setPassphrase] = useState('');
 	const [walletList, setWalletList] = useState([]);

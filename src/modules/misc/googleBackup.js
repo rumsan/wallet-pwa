@@ -5,6 +5,7 @@ import { gapi } from 'gapi-script';
 import { BACKUP } from '../../constants';
 import { AppContext } from '../../contexts/AppContext';
 import DataService from '../../services/db';
+import UserImg from '../../assets/images/user.svg';
 
 import { GFile, GFolder } from '../../utils/google';
 import Swal from 'sweetalert2';
@@ -39,7 +40,7 @@ export default function GoogleBackup() {
 		id: null,
 		name: 'Loading User...',
 		email: null,
-		image: 'http://www.pngall.com/wp-content/uploads/5/Profile-PNG-Images.png'
+		image: UserImg
 	});
 	const [passphrase, setPassphrase] = useState('');
 	const [passphraseStrength, setPassphraseStrength] = useState('None');
