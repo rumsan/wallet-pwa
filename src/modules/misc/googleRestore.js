@@ -86,16 +86,20 @@ export default function GoogleRestore() {
 
 	const updateSigninStatus = isSignedIn => {
 		let user = null;
-		if (isSignedIn) {
-			user = gapi.auth2.getAuthInstance().currentUser.get();
-			const profile = user.getBasicProfile();
-			setGUser({
-				id: profile.getId(),
-				name: profile.getName(),
-				email: profile.getEmail(),
-				image: profile.getImageUrl()
-			});
-		} else user = handleUserSignIn();
+		try {
+			if (isSignedIn) {
+				user = gapi.auth2.getAuthInstance().currentUser.get();
+				const profile = user.getBasicProfile();
+				setGUser({
+					id: profile.getId(),
+					name: profile.getName(),
+					email: profile.getEmail(),
+					image: profile.getImageUrl()
+				});
+			} else user = handleUserSignIn();
+		} catch (e) {
+			alert('---' + e.message);
+		}
 	};
 
 	const handleUserSignIn = () => {
