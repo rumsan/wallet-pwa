@@ -80,26 +80,28 @@ export default function GoogleRestore() {
 				updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
 			})
 			.catch(e => {
-				alert(JSON.stringify(e));
+				Swal.fire(
+					'Warning',
+					'You have blocked third-party cookies for this site or app. You must allow them for Google login to work.',
+					'warning'
+				).then(e => {
+					history.push('/');
+				});
 			});
 	};
 
 	const updateSigninStatus = isSignedIn => {
 		let user = null;
-		try {
-			if (isSignedIn) {
-				user = gapi.auth2.getAuthInstance().currentUser.get();
-				const profile = user.getBasicProfile();
-				setGUser({
-					id: profile.getId(),
-					name: profile.getName(),
-					email: profile.getEmail(),
-					image: profile.getImageUrl()
-				});
-			} else user = handleUserSignIn();
-		} catch (e) {
-			alert('---' + e.message);
-		}
+		if (isSignedIn) {
+			user = gapi.auth2.getAuthInstance().currentUser.get();
+			const profile = user.getBasicProfile();
+			setGUser({
+				id: profile.getId(),
+				name: profile.getName(),
+				email: profile.getEmail(),
+				image: profile.getImageUrl()
+			});
+		} else user = handleUserSignIn();
 	};
 
 	const handleUserSignIn = () => {
