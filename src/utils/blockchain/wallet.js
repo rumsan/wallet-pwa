@@ -20,6 +20,11 @@ export default {
 		return this.connectProvider(wallet);
 	},
 
+	async loadWallet(passcode) {
+		const wlt = await DataService.getWallet();
+		return this.loadFromJson(passcode, wlt);
+	},
+
 	async create(passcode, mnemonic) {
 		if (!passcode) {
 			throw Error('Passcode must be set first');
