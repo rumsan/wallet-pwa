@@ -2,7 +2,6 @@ import React, { useState, useContext } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import QrReader from 'react-qr-reader';
 import Swal from 'sweetalert2';
-import axios from 'axios';
 
 import ModalWrapper from '../global/ModalWrapper';
 import { AppContext } from '../../contexts/AppContext';
@@ -18,20 +17,25 @@ export default function UnlockedFooter() {
 
 	const handleScanModalToggle = () => setScanModal(!scanModal);
 
-	const handleQRLogin = async payload => {
-		try {
-			const signedData = await wallet.signMessage(payload.token);
-			const { data } = await axios.post(payload.callbackUrl, {
-				id: payload.id,
-				signature: signedData
-			});
-			if (data) {
-				handleScanModalToggle();
-				Swal.fire('SUCCESS', 'Logged in successfully!', 'success');
-			}
-		} catch (err) {
-			Swal.fire('ERROR', 'Login using wallet failed!', 'error');
-		}
+	const handleQRLogin = payload => {
+		wallet.signMessage(payload.token).then(signedData => {
+			const data = { id: payload.id, signature: signedData };
+			fetch(`${payload.callbackUrl}`, {
+				method: 'POST',
+				headers: {
+					Accept: 'application/json',
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(data)
+			})
+				.then(response => {
+					handleScanModalToggle();
+					Swal.fire('SUCCESS', 'Logged in successfully!', 'success');
+				})
+				.catch(err => {
+					Swal.fire('ERROR', 'Login using wallet failed!', 'error');
+				});
+		});
 	};
 
 	const handleScanError = err => {
@@ -47,7 +51,7 @@ export default function UnlockedFooter() {
 		return true;
 	};
 
-	const handlScanSuccess = async data => {
+	const handleScanSuccess = async data => {
 		let loginPayload = null;
 		if (data) {
 			const isJsonStr = isJsonString(data);
@@ -91,7 +95,7 @@ export default function UnlockedFooter() {
 						delay={SCAN_DELAY}
 						style={SCANNER_PREVIEW_STYLE}
 						onError={handleScanError}
-						onScan={handlScanSuccess}
+						onScan={handleScanSuccess}
 					/>
 				</div>
 			</ModalWrapper>

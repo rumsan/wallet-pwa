@@ -35,12 +35,11 @@ export default function Index() {
 		}
 	};
 
-	const fetchPhrasesAndLoad = async data => {
+	const fetchPhrasesAndLoad = async passcode => {
 		try {
 			setLoading(true);
-			const w = new Wallet({ passcode: data });
-			const wlt = await w.loadUsingAppChabi(data);
-			const words = wlt.mnemonic.phrase.split(' ');
+			const w = await Wallet.loadWallet(passcode);
+			const words = w.mnemonic.phrase.split(' ');
 			setPhrases(words);
 			setLoading(false);
 			togglePhraseModal();
