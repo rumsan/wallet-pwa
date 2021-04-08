@@ -8,6 +8,8 @@ import CreateWallet from '../modules/wallet/create';
 import ResetWallet from '../modules/misc/reset';
 import RestoreFromMnemonic from '../modules/wallet/restoreMnemonic';
 
+import PWA from '../modules/pwa';
+
 import { AppContextProvider } from '../contexts/AppContext';
 
 function App() {
@@ -16,6 +18,8 @@ function App() {
 			<AppContextProvider>
 				<BrowserRouter>
 					<Switch>
+						{/* TOD Remove pwa route */}
+						<Route exact path="/pwa" component={PWA} />
 						<Route exact path="/create" component={CreateWallet} />
 						<Route exact path="/unlock" component={UnlockWallet} />
 						<Route exact path="/google/restore" component={GoogleRestore} />
