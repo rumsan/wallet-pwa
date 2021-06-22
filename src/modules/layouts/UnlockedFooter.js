@@ -31,8 +31,12 @@ export default function UnlockedFooter() {
 			cancelButtonText: 'No'
 		});
 		if (isConfirm.value) {
-			const encrytedWallet = await EthCrypto.encryptWithPublicKey(encryptionKey, wallet.privateKey);
-			data.encryptedWallet = encrytedWallet;
+			const passcodeEncryptedWallet = await DataService.getWallet();
+			const encrytedWallet = await EthCrypto.encryptWithPublicKey(
+				encryptionKey,
+				passcodeEncryptedWallet.toString()
+			);
+			data.encryptedWallet = EthCrypto.cipher.stringify(encrytedWallet);
 		}
 	};
 
