@@ -1,6 +1,8 @@
 import React, { useState, useContext } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import QrReader from 'react-qr-reader';
+import EthCrypto from 'eth-crypto';
+
 import Swal from 'sweetalert2';
 
 import ModalWrapper from '../global/ModalWrapper';
@@ -17,9 +19,29 @@ export default function UnlockedFooter() {
 
 	const handleScanModalToggle = () => setScanModal(!scanModal);
 
-	const handleQRLogin = payload => {
-		wallet.signMessage(payload.token).then(signedData => {
-			const data = { id: payload.id, signature: signedData };
+	const confirmAndSign = async (data, encryptionKey) => {
+		const isConfirm = await Swal.fire({
+			title: 'Wallet Transfer',
+			icon: 'warning',
+			html: `Would you like to transfer your wallet and login?`,
+			showCancelButton: true,
+			confirmButtonColor: '#3085d6',
+			cancelButtonColor: '#d33',
+			confirmButtonText: 'Yes',
+			cancelButtonText: 'No'
+		});
+		if (isConfirm.value) {
+			const encrytedWallet = await EthCrypto.encryptWithPublicKey(encryptionKey, wallet.privateKey);
+			data.encryptedWallet = encrytedWallet;
+		}
+	};
+
+	const handleQRLogin = async payload => {
+		wallet.signMessage(payload.token).then(async signedData => {
+			let data = { id: payload.id, signature: signedData };
+			if (payload.encryptionKey) {
+				await confirmAndSign(data, payload.encryptionKey);
+			}
 			fetch(`${payload.callbackUrl}`, {
 				method: 'POST',
 				headers: {
